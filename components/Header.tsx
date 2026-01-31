@@ -149,13 +149,13 @@ export function Header() {
               </Link>
             )}
 
-            {/* Edit SME Profile link - visible to existing SMEs */}
-            {!isLoading && isSme && !needsProfileSetup && (
+            {/* SME Profile link - visible to existing SMEs, links to their expert page */}
+            {!isLoading && isSme && !needsProfileSetup && smeId && (
               <Link
-                href="/sme-profile"
+                href={`/experts/${smeId}`}
                 className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
               >
-                My SME Profile
+                SME Profile
               </Link>
             )}
 

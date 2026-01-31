@@ -110,6 +110,26 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
   const [endorseComment, setEndorseComment] = useState("");
   const [endorseLoading, setEndorseLoading] = useState(false);
   const [endorseError, setEndorseError] = useState<string | null>(null);
+  const [currentUserSmeId, setCurrentUserSmeId] = useState<string | null>(null);
+
+  // Check if viewing own profile (cannot endorse self)
+  const isOwnProfile = currentUserSmeId !== null && expert?.id === currentUserSmeId;
+
+  // Fetch current user's smeId to check for self-view
+  useEffect(() => {
+    async function fetchCurrentUser() {
+      try {
+        const response = await fetch("/api/auth/me");
+        if (response.ok) {
+          const data = await response.json();
+          setCurrentUserSmeId(data.smeId || null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch current user:", err);
+      }
+    }
+    fetchCurrentUser();
+  }, []);
 
   const fetchEndorsedSkills = useCallback(async (smeId: string) => {
     try {
@@ -519,7 +539,11 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
                         <span className="text-sm font-medium">{skill.endorsementCount} endorsements</span>
                       </div>
                     </div>
-                    {endorsedSkillIds.includes(skill.id) ? (
+                    {isOwnProfile ? (
+                      <span className="bg-gray-50 border border-gray-200 text-gray-500 px-4 py-2 rounded-lg text-sm font-medium">
+                        Your skill
+                      </span>
+                    ) : endorsedSkillIds.includes(skill.id) ? (
                       <span className="bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4" />
                         Endorsed

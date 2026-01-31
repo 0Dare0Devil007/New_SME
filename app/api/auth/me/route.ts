@@ -52,6 +52,7 @@ export async function GET() {
       isCoordinator: roles.includes("COORDINATOR"),
       isSme: hasSmeProfile,
       smeId: employee?.smeProfile?.smeId?.toString() || null,
+      smeStatus: employee?.smeProfile?.status || null,
       needsProfileSetup,
     });
   } catch (error) {
