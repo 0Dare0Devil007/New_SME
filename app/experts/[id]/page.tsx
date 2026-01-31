@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useCallback } from "react";
 import Link from "next/link";
 import { 
   ArrowLeft, 
@@ -17,7 +17,9 @@ import {
   Star,
   ThumbsUp,
   GraduationCap,
-  CheckCircle2
+  CheckCircle2,
+  Loader2,
+  X
 } from "lucide-react";
 
 // Figma asset URLs (valid for 7 days)
@@ -101,6 +103,25 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
   const [expert, setExpert] = useState<ExpertDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [endorsedSkillIds, setEndorsedSkillIds] = useState<string[]>([]);
+  const [endorsingSkillId, setEndorsingSkillId] = useState<string | null>(null);
+  const [endorseModalOpen, setEndorseModalOpen] = useState(false);
+  const [selectedSkill, setSelectedSkill] = useState<{ id: string; name: string } | null>(null);
+  const [endorseComment, setEndorseComment] = useState("");
+  const [endorseLoading, setEndorseLoading] = useState(false);
+  const [endorseError, setEndorseError] = useState<string | null>(null);
+
+  const fetchEndorsedSkills = useCallback(async (smeId: string) => {
+    try {
+      const response = await fetch(`/api/endorsements?smeId=${smeId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setEndorsedSkillIds(data.endorsedSkillIds || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch endorsed skills:", err);
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchExpert() {
@@ -118,6 +139,8 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
         }
         const data = await response.json();
         setExpert(data);
+        // Fetch which skills user has already endorsed
+        fetchEndorsedSkills(data.id);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load expert");
       } finally {
@@ -126,7 +149,60 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
     }
 
     fetchExpert();
-  }, [id]);
+  }, [id, fetchEndorsedSkills]);
+
+  const handleEndorseClick = (skillId: string, skillName: string) => {
+    setSelectedSkill({ id: skillId, name: skillName });
+    setEndorseComment("");
+    setEndorseError(null);
+    setEndorseModalOpen(true);
+  };
+
+  const submitEndorsement = async () => {
+    if (!selectedSkill) return;
+
+    setEndorseLoading(true);
+    setEndorseError(null);
+
+    try {
+      const response = await fetch("/api/endorsements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          smeSkillId: selectedSkill.id,
+          comment: endorseComment || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create endorsement");
+      }
+
+      // Update local state
+      setEndorsedSkillIds((prev) => [...prev, selectedSkill.id]);
+      
+      // Update expert's endorsement count
+      if (expert) {
+        setExpert({
+          ...expert,
+          totalEndorsements: expert.totalEndorsements + 1,
+          skills: expert.skills.map((skill) =>
+            skill.id === selectedSkill.id
+              ? { ...skill, endorsementCount: skill.endorsementCount + 1 }
+              : skill
+          ),
+        });
+      }
+
+      setEndorseModalOpen(false);
+    } catch (err) {
+      setEndorseError(err instanceof Error ? err.message : "Failed to endorse");
+    } finally {
+      setEndorseLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -443,10 +519,25 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
                         <span className="text-sm font-medium">{skill.endorsementCount} endorsements</span>
                       </div>
                     </div>
-                    <button className="bg-white border border-gray-300 hover:border-gray-400 text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2">
-                      <ThumbsUp className="w-4 h-4" />
-                      Endorse
-                    </button>
+                    {endorsedSkillIds.includes(skill.id) ? (
+                      <span className="bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4" />
+                        Endorsed
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handleEndorseClick(skill.id, skill.name)}
+                        disabled={endorsingSkillId === skill.id}
+                        className="bg-white border border-gray-300 hover:border-blue-400 hover:bg-blue-50 text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 disabled:opacity-50"
+                      >
+                        {endorsingSkillId === skill.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <ThumbsUp className="w-4 h-4" />
+                        )}
+                        Endorse
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -580,6 +671,73 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
       </div>
+
+      {/* Endorsement Modal */}
+      {endorseModalOpen && selectedSkill && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900">Endorse Skill</h3>
+              <button
+                onClick={() => setEndorseModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <p className="text-gray-600 mb-4">
+              You are endorsing <span className="font-semibold text-gray-900">{expert?.name}</span> for{" "}
+              <span className="font-semibold text-blue-600">{selectedSkill.name}</span>
+            </p>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Comment (optional)
+              </label>
+              <textarea
+                value={endorseComment}
+                onChange={(e) => setEndorseComment(e.target.value)}
+                placeholder="Share your experience working with this person on this skill..."
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                rows={3}
+              />
+            </div>
+
+            {endorseError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {endorseError}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setEndorseModalOpen(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitEndorsement}
+                disabled={endorseLoading}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {endorseLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Endorsing...
+                  </>
+                ) : (
+                  <>
+                    <ThumbsUp className="w-4 h-4" />
+                    Endorse
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

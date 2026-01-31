@@ -1,22 +1,34 @@
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
-import { createHash, randomBytes } from "crypto";
+import { randomBytes } from "crypto";
+import { scryptAsync } from "@noble/hashes/scrypt.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
 import "dotenv/config";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-// Password hashing using scrypt (compatible with better-auth)
+// Password hashing compatible with Better Auth
+// Uses the same config as better-auth/dist/crypto/password.mjs
+const scryptConfig = {
+  N: 16384,
+  r: 16,
+  p: 1,
+  dkLen: 64
+};
+
 async function hashPassword(password: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const salt = randomBytes(16).toString("hex");
-    require("crypto").scrypt(password, salt, 64, (err: Error | null, derivedKey: Buffer) => {
-      if (err) reject(err);
-      resolve(`${salt}:${derivedKey.toString("hex")}`);
-    });
+  const salt = bytesToHex(randomBytes(16));
+  const key = await scryptAsync(password.normalize("NFKC"), salt, {
+    N: scryptConfig.N,
+    r: scryptConfig.r,
+    p: scryptConfig.p,
+    dkLen: scryptConfig.dkLen,
+    maxmem: 128 * scryptConfig.N * scryptConfig.r * 2
   });
+  return `${salt}:${bytesToHex(key)}`;
 }
 
 // Generate a unique ID (similar to cuid)

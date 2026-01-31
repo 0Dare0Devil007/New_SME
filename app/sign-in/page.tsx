@@ -2,11 +2,15 @@
 
 import { useState } from "react";
 import { signIn } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Suspense } from "react";
 
-export default function SignInPage() {
+function SignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -20,14 +24,14 @@ export default function SignInPage() {
     const { error } = await signIn.email({
       email,
       password,
-      callbackURL: "/",
+      callbackURL: callbackUrl,
     });
 
     if (error) {
       setError(error.message ?? "Sign in failed");
       setLoading(false);
     } else {
-      router.push("/");
+      router.push(callbackUrl);
       router.refresh();
     }
   };
@@ -107,5 +111,19 @@ export default function SignInPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-black">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900 dark:border-zinc-100"></div>
+        </div>
+      }
+    >
+      <SignInForm />
+    </Suspense>
   );
 }

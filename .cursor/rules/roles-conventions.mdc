@@ -1,0 +1,60 @@
+---
+description: Application role codes and naming conventions
+alwaysApply: true
+---
+
+# Role Codes & Naming Conventions
+
+## Available Roles
+
+The application uses these role codes in the `AppRole` table:
+
+| Role Code     | Display Name   | Description                                       |
+|---------------|----------------|---------------------------------------------------|
+| `EMPLOYEE`    | Employee       | Standard employee access, can view and endorse    |
+| `TEAM_LEADER` | Team Leader    | Can nominate employees to become SMEs             |
+| `COORDINATOR` | Coordinator    | Manages department SMEs (activate/deactivate/delete)|
+| `MANAGEMENT`  | Management     | Manager role, access to analytics dashboard       |
+
+## Usage in Code
+
+```typescript
+// ✅ CORRECT - Use exact role codes from database
+roles.includes("MANAGEMENT")
+roles.includes("TEAM_LEADER")
+roles.includes("COORDINATOR")
+roles.includes("EMPLOYEE")
+
+// ❌ WRONG - These role codes don't exist
+roles.includes("MANAGER")      // Use "MANAGEMENT"
+roles.includes("TL")           // Use "TEAM_LEADER"
+roles.includes("ADMIN")        // Not a valid role
+```
+
+## Role Check Pattern
+
+```typescript
+// Server-side role check
+const employee = await prisma.employee.findUnique({
+  where: { email: session.user.email },
+  include: {
+    roles: { include: { role: true } },
+  },
+});
+
+const roles = employee?.roles.map((er) => er.role.roleCode) ?? [];
+const isManager = roles.includes("MANAGEMENT");
+```
+
+## Feature Access by Role
+
+| Feature              | Route              | Required Role / Condition           |
+|----------------------|--------------------|-------------------------------------|
+| View Skills          | `/skills`          | All authenticated users             |
+| View Experts/SMEs    | `/experts`         | All authenticated users             |
+| Endorse SME Skills   | `/experts/[id]`    | All authenticated users             |
+| Dashboard            | `/dashboard`       | `MANAGEMENT`                        |
+| Nominate SMEs        | `/nominations`     | `TEAM_LEADER`                       |
+| Department SMEs      | `/department-smes` | `COORDINATOR`                       |
+| Create SME Profile   | `/sme-profile`     | Nominated employees (pending profile)|
+| Edit SME Profile     | `/sme-profile`     | Existing SMEs                       |
