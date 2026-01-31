@@ -60,7 +60,6 @@ interface ExpertDetail {
   languages: string;
   totalEndorsements: number;
   studentCount: number;
-  averageRating: number;
   yearsExperience: number;
   skills: Array<{
     id: string;
@@ -77,7 +76,6 @@ interface ExpertDetail {
     skillName: string;
     comment?: string;
     endorsedAt: string;
-    rating: number;
   }>;
   certifications: Array<{
     id: string;
@@ -114,6 +112,16 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
 
   // Check if viewing own profile (cannot endorse self)
   const isOwnProfile = currentUserSmeId !== null && expert?.id === currentUserSmeId;
+
+  // Update page title with expert name
+  useEffect(() => {
+    if (expert) {
+      document.title = `${expert.name} - SME Profile`;
+    }
+    return () => {
+      document.title = "SME Directory";
+    };
+  }, [expert]);
 
   // Fetch current user's smeId to check for self-view
   useEffect(() => {
@@ -272,13 +280,19 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
 
         {/* Profile Card */}
         <div className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
-          {/* Purple Gradient Banner */}
+          {/* Purple Gradient Banner with Name & Position */}
           <div 
-            className="h-48 relative"
+            className="h-48 relative px-8 pt-8"
             style={{
               backgroundImage: "linear-gradient(170deg, rgb(21, 93, 252) 0%, rgb(79, 57, 246) 50%, rgb(130, 0, 219) 100%)",
             }}
-          />
+          >
+            {/* Name and Position on Banner */}
+            <div className="ml-48 pl-6">
+              <h1 className="text-4xl font-bold text-white mb-1">{expert.name}</h1>
+              <p className="text-lg font-medium text-white/90">{expert.position}</p>
+            </div>
+          </div>
           
           {/* Profile Content */}
           <div className="px-8 pb-8 -mt-20">
@@ -300,11 +314,8 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
                 </div>
               </div>
 
-              {/* Name and Info */}
-              <div className="flex-1 pt-6">
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">{expert.name}</h1>
-                <p className="text-xl text-gray-600 mb-4">{expert.position}</p>
-                
+              {/* Info Section */}
+              <div className="flex-1 pt-24">
                 {/* Badges */}
                 <div className="flex flex-wrap gap-3 mb-6">
                   <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg px-3 py-1.5 flex items-center gap-2 shadow-sm">
@@ -314,10 +325,6 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
                   <div className="border border-gray-200 rounded-lg px-3 py-1.5 flex items-center gap-2">
                     <Users className="w-3 h-3" />
                     <span className="text-gray-900 text-xs font-medium">{expert.studentCount}+ Students</span>
-                  </div>
-                  <div className="border border-gray-200 rounded-lg px-3 py-1.5 flex items-center gap-2">
-                    <Star className="w-3 h-3 text-yellow-500" />
-                    <span className="text-gray-900 text-xs font-medium">{expert.averageRating} Rating</span>
                   </div>
                   <div className="border border-gray-200 rounded-lg px-3 py-1.5 flex items-center gap-2">
                     <Award className="w-3 h-3" />
@@ -366,10 +373,15 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
                     <Video className="w-4 h-4" />
                     <span className="text-sm font-medium">Start Teams Meeting</span>
                   </button>
-                  <button className="bg-white border-2 border-gray-200 hover:border-gray-300 text-gray-900 px-4 py-2 rounded-lg flex items-center gap-2 transition-all">
+                  <a 
+                    href={expert.teamsLink || `https://teams.microsoft.com/l/chat/0/0?users=${encodeURIComponent(expert.email)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-white border-2 border-gray-200 hover:border-gray-300 text-gray-900 px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
+                  >
                     <MessageSquare className="w-4 h-4" />
-                    <span className="text-sm font-medium">Send Message</span>
-                  </button>
+                    <span className="text-sm font-medium">Message on Teams</span>
+                  </a>
                 </div>
               </div>
             </div>
@@ -452,10 +464,6 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
                   <p className="text-3xl font-bold text-white">{expert.studentCount}</p>
                   <p className="text-sm text-blue-100">Students Trained</p>
                 </div>
-                <div>
-                  <p className="text-3xl font-bold text-white">{expert.averageRating}</p>
-                  <p className="text-sm text-blue-100">Average Rating</p>
-                </div>
               </div>
             </div>
           </div>
@@ -472,48 +480,6 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
                 {expert.bio || `${expert.name} is a ${expert.position} with extensive experience in ${expert.department}. They are passionate about sharing knowledge and helping others grow in their careers.`}
               </p>
             </div>
-
-            {/* Recent Endorsements */}
-            {expert.recentEndorsements.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <ThumbsUp className="w-5 h-5 text-gray-700" />
-                  <h2 className="text-xl font-bold text-gray-900">Recent Endorsements</h2>
-                </div>
-                <div className="space-y-4">
-                  {expert.recentEndorsements.map((endorsement) => (
-                    <div key={endorsement.id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
-                      <div className="flex gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-semibold shrink-0">
-                          {endorsement.endorserName.split(" ").map(n => n[0]).join("")}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between mb-1">
-                            <div>
-                              <p className="font-semibold text-gray-900 text-sm">{endorsement.endorserName}</p>
-                              <p className="text-xs text-gray-500">{endorsement.endorserPosition}</p>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                              <span className="text-sm font-semibold text-gray-900">{endorsement.rating}</span>
-                            </div>
-                          </div>
-                          <div className="inline-block bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded mb-2">
-                            {endorsement.skillName}
-                          </div>
-                          {endorsement.comment && (
-                            <p className="text-sm text-gray-600">{endorsement.comment}</p>
-                          )}
-                          <p className="text-xs text-gray-400 mt-1">
-                            {new Date(endorsement.endorsedAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Skills & Expertise */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
@@ -675,11 +641,6 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
                           <div className="flex items-center gap-2">
                             <Users className="w-4 h-4" />
                             <span>24/30 enrolled</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                            <span className="font-semibold text-gray-900">4.8</span>
-                            <span className="text-gray-400">(156)</span>
                           </div>
                         </div>
                         <button className="bg-gradient-to-r from-green-700 to-green-600 hover:from-green-800 hover:to-green-700 text-white px-4 py-2 rounded-lg shadow-lg shadow-green-200 text-sm font-medium transition-all flex items-center gap-2">

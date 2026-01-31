@@ -80,9 +80,6 @@ export async function GET(
     // Get student count (sum of all course enrollments - simplified)
     const studentCount = smeProfile.courses.length * 30; // Placeholder calculation
 
-    // Calculate average rating (simplified - you'd get this from actual course ratings)
-    const averageRating = 4.8;
-
     // Get recent endorsements (last 5)
     const allEndorsements = smeProfile.skills.flatMap((skill) =>
       skill.endorsements.map((endorsement) => ({
@@ -106,7 +103,6 @@ export async function GET(
         skillName: e.skillName,
         comment: e.comment,
         endorsedAt: e.endorsedAt.toISOString(),
-        rating: 5, // Default
       }));
 
     // Transform the data
@@ -130,7 +126,6 @@ export async function GET(
       // Metrics
       totalEndorsements,
       studentCount,
-      averageRating,
       yearsExperience: 13, // Calculate from profile data or add to schema
       
       // Skills with endorsements
