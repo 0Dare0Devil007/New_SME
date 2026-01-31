@@ -1,13 +1,7 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-import { Pool } from "pg";
-import { PrismaPg } from "@prisma/adapter-pg";
+import prisma from "@/lib/prisma";
 
 export async function GET() {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  const adapter = new PrismaPg(pool);
-  const prisma = new PrismaClient({ adapter });
-  
   try {
     // Fetch top SMEs based on total endorsements across all their skills
     const smeProfiles = await prisma.smeProfile.findMany({
@@ -61,8 +55,5 @@ export async function GET() {
       { error: "Failed to fetch featured experts" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
-    await pool.end();
   }
 }

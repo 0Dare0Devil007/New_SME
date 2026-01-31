@@ -1,0 +1,82 @@
+---
+description: Next.js 15+ and project conventions for SME Directory
+alwaysApply: true
+---
+
+# Next.js SME Directory Conventions
+
+## Prisma Database Access
+
+Always use the singleton instance. Never create new PrismaClient instances.
+
+```typescript
+// ✅ GOOD
+import prisma from "@/lib/prisma";
+
+// ❌ BAD - creates connection leaks
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
+```
+
+## Next.js 15+ Route Parameters
+
+Route params are Promises in Next.js 15+.
+
+```typescript
+// ✅ Server Component / API Route
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+}
+
+// ✅ Client Component
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+}
+```
+
+## Server vs Client Components
+
+- Prefer Server Components for data fetching
+- Only add `"use client"` when needed for hooks or interactivity
+- Use Server Components at the page level, client components for interactive pieces
+
+## Images
+
+Use `next/image` for optimization, not raw `<img>` tags.
+
+```tsx
+// ✅ GOOD
+import Image from "next/image";
+<Image src={url} alt="desc" width={100} height={100} />
+
+// ❌ BAD
+<img src={url} alt="desc" />
+```
+
+## API Response Format
+
+Use consistent error responses with proper status codes.
+
+```typescript
+// Success
+return NextResponse.json(data);
+
+// Error
+return NextResponse.json({ error: "Message" }, { status: 400 | 404 | 500 });
+```
+
+## Type Safety
+
+Use Prisma-generated types instead of `any`.
+
+```typescript
+// ✅ GOOD
+import { Prisma } from '@prisma/client';
+const where: Prisma.SkillWhereInput = { isActive: true };
+
+// ❌ BAD
+const where: any = { isActive: true };
+```

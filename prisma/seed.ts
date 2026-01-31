@@ -1,11 +1,28 @@
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
+import { createHash, randomBytes } from "crypto";
 import "dotenv/config";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
+
+// Password hashing using scrypt (compatible with better-auth)
+async function hashPassword(password: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const salt = randomBytes(16).toString("hex");
+    require("crypto").scrypt(password, salt, 64, (err: Error | null, derivedKey: Buffer) => {
+      if (err) reject(err);
+      resolve(`${salt}:${derivedKey.toString("hex")}`);
+    });
+  });
+}
+
+// Generate a unique ID (similar to cuid)
+function generateId(): string {
+  return randomBytes(16).toString("hex");
+}
 
 // Figma icon URLs
 const icons = {
@@ -30,16 +47,117 @@ async function main() {
     { roleCode: "MANAGEMENT", roleName: "Management" },
   ];
 
+  const roleMap: Record<string, any> = {};
   for (const role of appRoles) {
-    await prisma.appRole.upsert({
+    const createdRole = await prisma.appRole.upsert({
       where: { roleCode: role.roleCode },
       update: {},
       create: role,
     });
+    roleMap[role.roleCode] = createdRole;
     console.log(`App role "${role.roleName}" created`);
   }
 
-  // 2. Create skill categories
+  // 2. Create test users for each role (Better Auth users + Employees + Role assignments)
+  const testUsers = [
+    { email: "emp@test.com", name: "Test Employee", roleCode: "EMPLOYEE", empNumber: "TEST001", position: "Staff Member", departmentName: "General" },
+    { email: "tl@test.com", name: "Test Team Leader", roleCode: "TEAM_LEADER", empNumber: "TEST002", position: "Team Leader", departmentName: "Engineering" },
+    { email: "coor@test.com", name: "Test Coordinator", roleCode: "COORDINATOR", empNumber: "TEST003", position: "Coordinator", departmentName: "HR" },
+    { email: "man@test.com", name: "Test Management", roleCode: "MANAGEMENT", empNumber: "TEST004", position: "Director", departmentName: "Executive" },
+  ];
+
+  const testPassword = "Test1234!";
+  const hashedPassword = await hashPassword(testPassword);
+
+  console.log("\n--- Creating Test Users ---");
+  for (const testUser of testUsers) {
+    // Check if Better Auth user already exists
+    let user = await prisma.user.findUnique({
+      where: { email: testUser.email },
+    });
+
+    if (!user) {
+      // Create Better Auth User
+      const userId = generateId();
+      user = await prisma.user.create({
+        data: {
+          id: userId,
+          email: testUser.email,
+          name: testUser.name,
+          emailVerified: true,
+        },
+      });
+
+      // Create Better Auth Account (credential provider)
+      await prisma.account.create({
+        data: {
+          id: generateId(),
+          accountId: userId,
+          providerId: "credential",
+          userId: userId,
+          password: hashedPassword,
+        },
+      });
+
+      console.log(`✓ Better Auth user created: ${testUser.email}`);
+    } else {
+      console.log(`→ Better Auth user already exists: ${testUser.email}`);
+    }
+
+    // Create Employee record
+    let employee = await prisma.employee.findUnique({
+      where: { email: testUser.email },
+    });
+
+    if (!employee) {
+      employee = await prisma.employee.create({
+        data: {
+          empNumber: testUser.empNumber,
+          fullName: testUser.name,
+          email: testUser.email,
+          position: testUser.position,
+          departmentName: testUser.departmentName,
+          siteName: "Headquarters",
+          isActive: true,
+        },
+      });
+      console.log(`✓ Employee created: ${testUser.name}`);
+    } else {
+      console.log(`→ Employee already exists: ${testUser.name}`);
+    }
+
+    // Assign role to employee
+    const role = roleMap[testUser.roleCode];
+    const existingRole = await prisma.employeeRole.findUnique({
+      where: {
+        employeeId_roleId: {
+          employeeId: employee.employeeId,
+          roleId: role.roleId,
+        },
+      },
+    });
+
+    if (!existingRole) {
+      await prisma.employeeRole.create({
+        data: {
+          employeeId: employee.employeeId,
+          roleId: role.roleId,
+        },
+      });
+      console.log(`✓ Role "${testUser.roleCode}" assigned to ${testUser.name}`);
+    } else {
+      console.log(`→ Role "${testUser.roleCode}" already assigned to ${testUser.name}`);
+    }
+  }
+
+  console.log("\n📋 Test accounts created:");
+  console.log("   emp@test.com     / Test1234!  -> EMPLOYEE");
+  console.log("   tl@test.com      / Test1234!  -> TEAM_LEADER");
+  console.log("   coor@test.com    / Test1234!  -> COORDINATOR");
+  console.log("   man@test.com     / Test1234!  -> MANAGEMENT");
+  console.log("");
+
+  // 4. Create skill categories
   const categories = [
     { categoryName: "Technology", description: "Technical and IT-related skills" },
     { categoryName: "Business", description: "Business management and operations" },
@@ -58,7 +176,7 @@ async function main() {
     console.log(`Category "${cat.categoryName}" created`);
   }
 
-  // 3. Create skills
+  // 5. Create skills
   const skillsData = [
     {
       skillName: "Data Analytics",
@@ -133,7 +251,7 @@ async function main() {
     console.log(`Skill "${skill.skillName}" created`);
   }
 
-  // 4. Create employees (SMEs and others)
+  // 6. Create employees (SMEs and others)
   const employeesData = [
     // Data Analytics experts
     { fullName: "Sarah Chen", email: "sarah.chen@company.com", empNumber: "EMP001", position: "Senior Data Analyst", departmentName: "Analytics", siteName: "New York", avatarUrl: null },
@@ -211,7 +329,7 @@ async function main() {
     console.log(`Employee "${emp.fullName}" created or updated`);
   }
 
-  // 5. Create SME Profiles for featured employees
+  // 7. Create SME Profiles for featured employees
   const featuredSmes = [
     "Dr. Elena Rodriguez",
     "Alex Kumar", 
@@ -239,7 +357,7 @@ async function main() {
     console.log(`SME Profile created or updated for "${name}"`);
   }
 
-  // 6. Create SME Profiles and Skills for each skill area
+  // 8. Create SME Profiles and Skills for each skill area
   const skillEmployeeMapping = [
     { skill: "Data Analytics", employees: ["Sarah Chen", "Mike Johnson", "Lisa Wang", "David Kim", "Emma Davis", "John Smith"] },
     { skill: "Project Management", employees: ["Tom Wilson", "Amy Brown", "Chris Lee", "Rachel Green", "Mark Taylor", "Nina Patel"] },
@@ -329,7 +447,7 @@ async function main() {
     console.log(`Created SME profiles and skills for "${mapping.skill}"`);
   }
 
-  // 7. Create certifications for SMEs
+  // 9. Create certifications for SMEs
   const certificationTemplates = [
     "Professional Certification",
     "Advanced Training",
@@ -355,7 +473,7 @@ async function main() {
   }
   console.log("Created certifications for SMEs");
 
-  // 8. Add additional skills to some SMEs for variety
+  // 10. Add additional skills to some SMEs for variety
   const additionalSkillMappings = [
     { sme: "Alex Kumar", additionalSkills: ["Project Management", "Leadership", "Communication"] },
     { sme: "Dr. Elena Rodriguez", additionalSkills: ["Data Analytics", "Cloud Architecture", "Leadership"] },

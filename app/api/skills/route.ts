@@ -1,17 +1,8 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-import { Pool } from "pg";
-import { PrismaPg } from "@prisma/adapter-pg";
+import prisma from "@/lib/prisma";
 
 // API route to fetch skills with their top SMEs (with pagination support)
 export async function GET(request: Request) {
-  console.log("DATABASE_URL:", process.env.DATABASE_URL ? "SET" : "NOT SET");
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  const adapter = new PrismaPg(pool);
-  const prisma = new PrismaClient({ adapter });
-  console.log("Prisma client created:", !!prisma);
-  console.log("Prisma.skill:", !!prisma.skill);
-  
   try {
     // Parse query parameters
     const { searchParams } = new URL(request.url);
@@ -120,8 +111,5 @@ export async function GET(request: Request) {
       { error: "Failed to fetch skills" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
-    await pool.end();
   }
 }
