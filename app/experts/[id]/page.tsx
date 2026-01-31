@@ -19,7 +19,10 @@ import {
   GraduationCap,
   CheckCircle2,
   Loader2,
-  X
+  X,
+  Edit,
+  Power,
+  PowerOff
 } from "lucide-react";
 
 // Figma asset URLs (valid for 7 days)
@@ -57,7 +60,6 @@ interface ExpertDetail {
   availability: string;
   contactPref: string;
   teamsLink?: string;
-  languages: string;
   totalEndorsements: number;
   studentCount: number;
   yearsExperience: number;
@@ -109,9 +111,40 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
   const [endorseLoading, setEndorseLoading] = useState(false);
   const [endorseError, setEndorseError] = useState<string | null>(null);
   const [currentUserSmeId, setCurrentUserSmeId] = useState<string | null>(null);
+  const [currentUserSmeStatus, setCurrentUserSmeStatus] = useState<string | null>(null);
+  const [togglingStatus, setTogglingStatus] = useState(false);
 
   // Check if viewing own profile (cannot endorse self)
   const isOwnProfile = currentUserSmeId !== null && expert?.id === currentUserSmeId;
+
+  // Helper to format weekly availability
+  const formatWeeklyAvailability = (availabilityJson: string) => {
+    try {
+      const availability = JSON.parse(availabilityJson);
+      const days = [
+        { key: "monday", label: "Mon" },
+        { key: "tuesday", label: "Tue" },
+        { key: "wednesday", label: "Wed" },
+        { key: "thursday", label: "Thu" },
+        { key: "friday", label: "Fri" },
+        { key: "saturday", label: "Sat" },
+        { key: "sunday", label: "Sun" },
+      ];
+
+      const enabledDays = days.filter((day) => availability[day.key]?.enabled);
+      
+      if (enabledDays.length === 0) {
+        return "Not specified";
+      }
+
+      return enabledDays.map((day) => {
+        const dayData = availability[day.key];
+        return `${day.label}: ${dayData.timeFrom} - ${dayData.timeTo}`;
+      });
+    } catch {
+      return ["Not specified"];
+    }
+  };
 
   // Update page title with expert name
   useEffect(() => {
@@ -123,7 +156,7 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
     };
   }, [expert]);
 
-  // Fetch current user's smeId to check for self-view
+  // Fetch current user's smeId and status to check for self-view
   useEffect(() => {
     async function fetchCurrentUser() {
       try {
@@ -131,6 +164,7 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
         if (response.ok) {
           const data = await response.json();
           setCurrentUserSmeId(data.smeId || null);
+          setCurrentUserSmeStatus(data.smeStatus || null);
         }
       } catch (err) {
         console.error("Failed to fetch current user:", err);
@@ -138,6 +172,25 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
     }
     fetchCurrentUser();
   }, []);
+
+  // Toggle SME profile status (activate/deactivate)
+  const toggleSmeStatus = async () => {
+    setTogglingStatus(true);
+    try {
+      const response = await fetch("/api/sme-profile", {
+        method: "PATCH",
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentUserSmeStatus(data.status);
+      }
+    } catch (err) {
+      console.error("Failed to toggle status:", err);
+    } finally {
+      setTogglingStatus(false);
+    }
+  };
 
   const fetchEndorsedSkills = useCallback(async (smeId: string) => {
     try {
@@ -287,6 +340,43 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
               backgroundImage: "linear-gradient(170deg, rgb(21, 93, 252) 0%, rgb(79, 57, 246) 50%, rgb(130, 0, 219) 100%)",
             }}
           >
+            {/* Own Profile Actions - Top Right */}
+            {isOwnProfile && (
+              <div className="absolute top-4 right-4 flex items-center gap-3">
+                <Link
+                  href="/sme-profile"
+                  className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all border border-white/30"
+                >
+                  <Edit className="w-4 h-4" />
+                  <span className="text-sm font-medium">Edit Profile</span>
+                </Link>
+                <button
+                  onClick={toggleSmeStatus}
+                  disabled={togglingStatus}
+                  className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all border-2 disabled:opacity-50 font-medium shadow-lg ${
+                    currentUserSmeStatus === "APPROVED"
+                      ? "bg-red-500 hover:bg-red-400 text-white border-red-300 shadow-red-500/30"
+                      : "bg-emerald-500 hover:bg-emerald-400 text-white border-emerald-300 shadow-emerald-500/30"
+                  }`}
+                >
+                  {togglingStatus ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : currentUserSmeStatus === "APPROVED" ? (
+                    <PowerOff className="w-4 h-4" />
+                  ) : (
+                    <Power className="w-4 h-4" />
+                  )}
+                  <span className="text-sm font-medium">
+                    {togglingStatus
+                      ? "Updating..."
+                      : currentUserSmeStatus === "APPROVED"
+                      ? "Deactivate"
+                      : "Activate"}
+                  </span>
+                </button>
+              </div>
+            )}
+            
             {/* Name and Position on Banner */}
             <div className="ml-48 pl-6">
               <h1 className="text-4xl font-bold text-white mb-1">{expert.name}</h1>
@@ -422,25 +512,29 @@ export default function ExpertDetailPage({ params }: { params: Promise<{ id: str
                 <Clock className="w-5 h-5 text-gray-700" />
                 <h3 className="text-lg font-bold text-gray-900">Availability</h3>
               </div>
-              <div className="space-y-3">
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                    <Clock className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Work Hours</p>
-                    <p className="text-sm font-medium text-gray-900">{expert.availability}</p>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                    <Calendar className="w-4 h-4 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Consultation Hours</p>
-                    <p className="text-sm font-medium text-gray-900">Available on Tuesdays and Thursdays</p>
-                  </div>
-                </div>
+              <div className="space-y-2">
+                {(() => {
+                  const schedules = formatWeeklyAvailability(expert.availability);
+                  return Array.isArray(schedules) ? schedules.map((schedule: string, index: number) => (
+                    <div key={index} className="flex gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                        <Calendar className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{schedule}</p>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-500">{schedules}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 

@@ -72,26 +72,31 @@ export default function HomePage() {
   const [featuredExperts, setFeaturedExperts] = useState<FeaturedExpert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalSMEs, setTotalSMEs] = useState(0);
+  const [totalSkills, setTotalSkills] = useState(0);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [skillsRes, expertsRes] = await Promise.all([
+        const [skillsRes, expertsRes, allExpertsRes] = await Promise.all([
           fetch("/api/skills?limit=8"), // Fetch first 8 skills for homepage preview
           fetch("/api/featured-experts"),
+          fetch("/api/experts"), // Fetch all experts to get accurate count
         ]);
 
         const skillsData = await skillsRes.json();
         const expertsData = await expertsRes.json();
+        const allExpertsData = await allExpertsRes.json();
 
         // Handle new paginated API response format
         const skills = skillsData.skills || skillsData;
         setSkills(skills);
         setFeaturedExperts(expertsData);
         
-        // Calculate total SMEs across displayed skills
-        const total = skills.reduce((sum: number, skill: Skill) => sum + skill.experts, 0);
-        setTotalSMEs(total);
+        // Set total SMEs from actual expert count
+        setTotalSMEs(allExpertsData.length);
+        
+        // Set total skills from pagination metadata
+        setTotalSkills(skillsData.pagination?.totalCount || skills.length);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -117,13 +122,13 @@ export default function HomePage() {
           <div className="flex justify-center gap-8 mb-8">
             <div className="text-center px-8">
               <p className="text-3xl font-bold text-white">
-                {isLoading ? "..." : `${totalSMEs}+`}
+                {isLoading ? "..." : totalSMEs}
               </p>
               <p className="text-sm text-blue-100">Active SMEs</p>
             </div>
             <div className="text-center px-8 border-x border-blue-400/30">
               <p className="text-3xl font-bold text-white">
-                {isLoading ? "..." : skills.length}
+                {isLoading ? "..." : totalSkills}
               </p>
               <p className="text-sm text-blue-100">Skill Areas</p>
             </div>

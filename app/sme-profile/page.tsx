@@ -7,7 +7,6 @@ import {
   User,
   FileText,
   Phone,
-  Globe,
   Clock,
   Award,
   Loader2,
@@ -17,6 +16,7 @@ import {
   ArrowRight,
   Plus,
   X,
+  Calendar,
 } from "lucide-react";
 
 interface Skill {
@@ -31,6 +31,22 @@ interface SelectedSkill {
   skillName: string;
   proficiency: string;
   yearsExp: number;
+}
+
+interface DayAvailability {
+  enabled: boolean;
+  timeFrom: string;
+  timeTo: string;
+}
+
+interface WeeklyAvailability {
+  monday: DayAvailability;
+  tuesday: DayAvailability;
+  wednesday: DayAvailability;
+  thursday: DayAvailability;
+  friday: DayAvailability;
+  saturday: DayAvailability;
+  sunday: DayAvailability;
 }
 
 interface NominationStatus {
@@ -56,8 +72,15 @@ export default function SmeProfilePage() {
 
   // Form state
   const [bio, setBio] = useState("");
-  const [languages, setLanguages] = useState("");
-  const [availability, setAvailability] = useState("");
+  const [weeklyAvailability, setWeeklyAvailability] = useState<WeeklyAvailability>({
+    monday: { enabled: false, timeFrom: "09:00", timeTo: "17:00" },
+    tuesday: { enabled: false, timeFrom: "09:00", timeTo: "17:00" },
+    wednesday: { enabled: false, timeFrom: "09:00", timeTo: "17:00" },
+    thursday: { enabled: false, timeFrom: "09:00", timeTo: "17:00" },
+    friday: { enabled: false, timeFrom: "09:00", timeTo: "17:00" },
+    saturday: { enabled: false, timeFrom: "09:00", timeTo: "17:00" },
+    sunday: { enabled: false, timeFrom: "09:00", timeTo: "17:00" },
+  });
   const [contactPhone, setContactPhone] = useState("");
   const [contactPref, setContactPref] = useState("email");
   const [teamsLink, setTeamsLink] = useState("");
@@ -82,8 +105,17 @@ export default function SmeProfilePage() {
             if (profileResponse.ok) {
               const profileData = await profileResponse.json();
               setBio(profileData.bio || "");
-              setLanguages(profileData.languages || "");
-              setAvailability(profileData.availability || "");
+              
+              // Parse availability JSON if it exists
+              if (profileData.availability) {
+                try {
+                  const parsedAvailability = JSON.parse(profileData.availability);
+                  setWeeklyAvailability(parsedAvailability);
+                } catch (e) {
+                  console.error("Error parsing availability:", e);
+                }
+              }
+              
               setContactPhone(profileData.contactPhone || "");
               setContactPref(profileData.contactPref || "email");
               setTeamsLink(profileData.teamsLink || "");
@@ -157,6 +189,30 @@ export default function SmeProfilePage() {
     );
   };
 
+  const toggleDay = (day: keyof WeeklyAvailability) => {
+    setWeeklyAvailability((prev) => ({
+      ...prev,
+      [day]: { ...prev[day], enabled: !prev[day].enabled },
+    }));
+  };
+
+  const updateDayTime = (day: keyof WeeklyAvailability, field: "timeFrom" | "timeTo", value: string) => {
+    setWeeklyAvailability((prev) => ({
+      ...prev,
+      [day]: { ...prev[day], [field]: value },
+    }));
+  };
+
+  const days: { key: keyof WeeklyAvailability; label: string }[] = [
+    { key: "monday", label: "Monday" },
+    { key: "tuesday", label: "Tuesday" },
+    { key: "wednesday", label: "Wednesday" },
+    { key: "thursday", label: "Thursday" },
+    { key: "friday", label: "Friday" },
+    { key: "saturday", label: "Saturday" },
+    { key: "sunday", label: "Sunday" },
+  ];
+
   const handleSubmit = async () => {
     setSubmitting(true);
     setError(null);
@@ -170,8 +226,7 @@ export default function SmeProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           bio,
-          languages,
-          availability,
+          availability: JSON.stringify(weeklyAvailability),
           contactPhone,
           contactPref,
           teamsLink,
@@ -308,31 +363,55 @@ export default function SmeProfilePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Globe className="w-4 h-4 inline mr-1" />
-                  Languages
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  <Calendar className="w-4 h-4 inline mr-1" />
+                  Weekly Availability
                 </label>
-                <input
-                  type="text"
-                  value={languages}
-                  onChange={(e) => setLanguages(e.target.value)}
-                  placeholder="e.g., English, Arabic, French"
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
+                <div className="space-y-3 bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  {days.map((day) => (
+                    <div
+                      key={day.key}
+                      className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
+                        weeklyAvailability[day.key].enabled
+                          ? "bg-white border border-blue-200"
+                          : "bg-gray-100"
+                      }`}
+                    >
+                      <label className="flex items-center gap-2 cursor-pointer min-w-[120px]">
+                        <input
+                          type="checkbox"
+                          checked={weeklyAvailability[day.key].enabled}
+                          onChange={() => toggleDay(day.key)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <span className={`font-medium ${weeklyAvailability[day.key].enabled ? "text-gray-900" : "text-gray-500"}`}>
+                          {day.label}
+                        </span>
+                      </label>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Clock className="w-4 h-4 inline mr-1" />
-                  Availability
-                </label>
-                <input
-                  type="text"
-                  value={availability}
-                  onChange={(e) => setAvailability(e.target.value)}
-                  placeholder="e.g., Mon-Fri, 9:00 AM - 5:00 PM EST"
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+                      {weeklyAvailability[day.key].enabled && (
+                        <div className="flex items-center gap-2 flex-1">
+                          <input
+                            type="time"
+                            value={weeklyAvailability[day.key].timeFrom}
+                            onChange={(e) => updateDayTime(day.key, "timeFrom", e.target.value)}
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                          <span className="text-gray-400">to</span>
+                          <input
+                            type="time"
+                            value={weeklyAvailability[day.key].timeTo}
+                            onChange={(e) => updateDayTime(day.key, "timeTo", e.target.value)}
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Select the days and times when you&apos;re available to help others
+                </p>
               </div>
             </div>
           )}

@@ -51,7 +51,6 @@ export async function GET() {
     return NextResponse.json({
       id: profile.smeId.toString(),
       bio: profile.bio || "",
-      languages: profile.languages || "",
       availability: profile.availability || "",
       contactPhone: profile.contactPhone || "",
       contactPref: profile.contactPref || "email",
@@ -124,14 +123,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { bio, languages, availability, contactPhone, contactPref, teamsLink, skills } = body;
+    const { bio, availability, contactPhone, contactPref, teamsLink, skills } = body;
 
     // Create the SME profile with APPROVED status
     const smeProfile = await prisma.smeProfile.create({
       data: {
         employeeId: employee.employeeId,
         bio: bio || null,
-        languages: languages || null,
         availability: availability || null,
         contactPhone: contactPhone || null,
         contactPref: contactPref || "email",
@@ -214,14 +212,13 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { bio, languages, availability, contactPhone, contactPref, teamsLink, skills } = body;
+    const { bio, availability, contactPhone, contactPref, teamsLink, skills } = body;
 
     // Update the profile
     const updatedProfile = await prisma.smeProfile.update({
       where: { smeId: employee.smeProfile.smeId },
       data: {
         bio: bio !== undefined ? bio : undefined,
-        languages: languages !== undefined ? languages : undefined,
         availability: availability !== undefined ? availability : undefined,
         contactPhone: contactPhone !== undefined ? contactPhone : undefined,
         contactPref: contactPref !== undefined ? contactPref : undefined,
@@ -255,6 +252,66 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error updating SME profile:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH - Toggle SME profile status (activate/deactivate)
+export async function PATCH() {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    const employee = await prisma.employee.findUnique({
+      where: { email: session.user.email },
+      include: {
+        smeProfile: true,
+      },
+    });
+
+    if (!employee) {
+      return NextResponse.json(
+        { error: "Employee record not found" },
+        { status: 404 }
+      );
+    }
+
+    if (!employee.smeProfile) {
+      return NextResponse.json(
+        { error: "No SME profile found" },
+        { status: 404 }
+      );
+    }
+
+    // Toggle status between APPROVED (active) and INACTIVE
+    const currentStatus = employee.smeProfile.status;
+    const newStatus = currentStatus === "APPROVED" ? "INACTIVE" : "APPROVED";
+
+    const updatedProfile = await prisma.smeProfile.update({
+      where: { smeId: employee.smeProfile.smeId },
+      data: {
+        status: newStatus,
+      },
+    });
+
+    return NextResponse.json({
+      id: updatedProfile.smeId.toString(),
+      status: updatedProfile.status,
+      message: `SME profile ${newStatus === "APPROVED" ? "activated" : "deactivated"} successfully`,
+    });
+  } catch (error) {
+    console.error("Error toggling SME profile status:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

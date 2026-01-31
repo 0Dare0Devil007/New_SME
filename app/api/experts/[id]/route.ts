@@ -118,10 +118,9 @@ export async function GET(
       employeeId: expert.empNumber,
       responseTime: "< 2 hours",
       bio: smeProfile.bio || "",
-      availability: smeProfile.availability || "Mon-Fri, 9:00 AM - 5:00 PM EST",
+      availability: smeProfile.availability || "{}",
       contactPref: smeProfile.contactPref || "email",
       teamsLink: smeProfile.teamsLink,
-      languages: smeProfile.languages || "English",
       
       // Metrics
       totalEndorsements,
