@@ -1,0 +1,295 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  name          String?
+  emailVerified Boolean    @default(false)
+  image         String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// =========================
+// SME APPLICATION SCHEMA
+// =========================
+
+// 1) EMPLOYEES / ORG DATA
+model Employee {
+  employeeId     BigInt   @id @default(autoincrement()) @map("employee_id")
+  empNumber      String   @unique @map("emp_number") @db.VarChar(50)
+  fullName       String   @map("full_name") @db.VarChar(200)
+  email          String   @unique @db.VarChar(320)
+  avatarUrl      String?  @map("avatar_url")
+  position       String?  @db.VarChar(200)
+  siteName       String?  @map("site_name") @db.VarChar(200)
+  departmentName String?  @map("department_name") @db.VarChar(200)
+  managerId      BigInt?  @map("manager_id")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Self-referential relation for manager
+  manager               Employee?              @relation("EmployeeManager", fields: [managerId], references: [employeeId])
+  subordinates          Employee[]             @relation("EmployeeManager")
+  
+  // Relations
+  roles                 EmployeeRole[]
+  smeProfile            SmeProfile?
+  skillsCreated         Skill[]
+  nominationsAsNominee  SmeNomination[]        @relation("NomineeEmployee")
+  nominationsAsTl       SmeNomination[]        @relation("NominatingTeamLeader")
+  nominationsAsCoord    SmeNomination[]        @relation("CoordinatorDecision")
+  departmentCoordinators DepartmentCoordinator[]
+  endorsements          Endorsement[]
+
+  @@index([managerId], map: "idx_employees_manager")
+  @@index([siteName], map: "idx_employees_site_name")
+  @@index([departmentName], map: "idx_employees_department_name")
+  @@map("employees")
+}
+
+// 2) ROLES / AUTHORIZATION
+model AppRole {
+  roleId    BigInt         @id @default(autoincrement()) @map("role_id")
+  roleCode  String         @unique @map("role_code") @db.VarChar(50)
+  roleName  String         @map("role_name") @db.VarChar(100)
+  
+  employees EmployeeRole[]
+
+  @@map("roles")
+}
+
+model EmployeeRole {
+  employeeId BigInt   @map("employee_id")
+  roleId     BigInt   @map("role_id")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  employee Employee @relation(fields: [employeeId], references: [employeeId], onDelete: Cascade)
+  role     AppRole  @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
+
+  @@id([employeeId, roleId])
+  @@map("employee_roles")
+}
+
+// 3) SKILL TAXONOMY
+model SkillCategory {
+  categoryId   BigInt   @id @default(autoincrement()) @map("category_id")
+  categoryName String   @unique @map("category_name") @db.VarChar(150)
+  description  String?
+  isActive     Boolean  @default(true) @map("is_active")
+
+  skills Skill[]
+
+  @@map("skill_categories")
+}
+
+model Skill {
+  skillId     BigInt    @id @default(autoincrement()) @map("skill_id")
+  skillName   String    @unique @map("skill_name") @db.VarChar(200)
+  categoryId  BigInt?   @map("category_id")
+  description String?
+  iconUrl     String?   @map("icon_url")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdBy   BigInt?   @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  category   SkillCategory? @relation(fields: [categoryId], references: [categoryId])
+  creator    Employee?      @relation(fields: [createdBy], references: [employeeId])
+  smeSkills  SmeSkill[]
+
+  @@index([categoryId])
+  @@map("skills")
+}
+
+// 4) SME LIFECYCLE
+model SmeProfile {
+  smeId        BigInt   @id @default(autoincrement()) @map("sme_id")
+  employeeId   BigInt   @unique @map("employee_id")
+  bio          String?
+  languages    String?  @db.VarChar(200)
+  availability String?  @db.VarChar(200)
+  contactPhone String?  @map("contact_phone") @db.VarChar(50)
+  contactPref  String?  @map("contact_pref") @db.VarChar(50)
+  teamsLink    String?  @map("teams_link")
+  status       String   @default("PENDING") @db.VarChar(30)
+  statusReason String?  @map("status_reason")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  employee       Employee            @relation(fields: [employeeId], references: [employeeId], onDelete: Cascade)
+  skills         SmeSkill[]
+  certifications SmeCertification[]
+  courses        Course[]
+
+  @@index([status], map: "idx_sme_status")
+  @@map("sme_profiles")
+}
+
+model SmeNomination {
+  nominationId       BigInt    @id @default(autoincrement()) @map("nomination_id")
+  nomineeEmployeeId  BigInt    @map("nominee_employee_id")
+  nominatedByTlId    BigInt    @map("nominated_by_tl_id")
+  departmentName     String?   @map("department_name") @db.VarChar(200)
+  requestedAt        DateTime  @default(now()) @map("requested_at")
+  status             String    @default("SUBMITTED") @db.VarChar(30)
+  decisionByCoordId  BigInt?   @map("decision_by_coord_id")
+  decisionAt         DateTime? @map("decision_at")
+  decisionNote       String?   @map("decision_note")
+
+  nominee       Employee  @relation("NomineeEmployee", fields: [nomineeEmployeeId], references: [employeeId], onDelete: Cascade)
+  nominatedBy   Employee  @relation("NominatingTeamLeader", fields: [nominatedByTlId], references: [employeeId])
+  decisionBy    Employee? @relation("CoordinatorDecision", fields: [decisionByCoordId], references: [employeeId])
+
+  @@map("sme_nominations")
+}
+
+model DepartmentCoordinator {
+  departmentName String   @map("department_name") @db.VarChar(200)
+  employeeId     BigInt   @map("employee_id")
+  assignedAt     DateTime @default(now()) @map("assigned_at")
+
+  employee Employee @relation(fields: [employeeId], references: [employeeId], onDelete: Cascade)
+
+  @@id([departmentName, employeeId])
+  @@map("department_coordinators")
+}
+
+// 5) SME SKILLS + ENDORSEMENTS
+model SmeSkill {
+  smeSkillId  BigInt    @id @default(autoincrement()) @map("sme_skill_id")
+  smeId       BigInt    @map("sme_id")
+  skillId     BigInt    @map("skill_id")
+  proficiency String?   @db.VarChar(30)
+  yearsExp    Decimal?  @map("years_exp") @db.Decimal(4, 1)
+  addedAt     DateTime  @default(now()) @map("added_at")
+  isActive    Boolean   @default(true) @map("is_active")
+
+  sme          SmeProfile    @relation(fields: [smeId], references: [smeId], onDelete: Cascade)
+  skill        Skill         @relation(fields: [skillId], references: [skillId])
+  endorsements Endorsement[]
+
+  @@unique([smeId, skillId], map: "uq_sme_skill")
+  @@index([skillId], map: "idx_sme_skill_skill_id")
+  @@map("sme_skills")
+}
+
+model Endorsement {
+  endorsementId         BigInt   @id @default(autoincrement()) @map("endorsement_id")
+  smeSkillId            BigInt   @map("sme_skill_id")
+  endorsedByEmployeeId  BigInt   @map("endorsed_by_employee_id")
+  endorsedAt            DateTime @default(now()) @map("endorsed_at")
+  comment               String?
+
+  smeSkill   SmeSkill  @relation(fields: [smeSkillId], references: [smeSkillId], onDelete: Cascade)
+  endorsedBy Employee  @relation(fields: [endorsedByEmployeeId], references: [employeeId])
+
+  @@unique([smeSkillId, endorsedByEmployeeId], map: "uq_endorse_once")
+  @@map("endorsements")
+}
+
+// 6) CERTIFICATIONS
+model SmeCertification {
+  certificationId BigInt    @id @default(autoincrement()) @map("certification_id")
+  smeId           BigInt    @map("sme_id")
+  title           String    @db.VarChar(250)
+  issuer          String?   @db.VarChar(250)
+  credentialId    String?   @map("credential_id") @db.VarChar(150)
+  credentialUrl   String?   @map("credential_url")
+  issuedDate      DateTime? @map("issued_date") @db.Date
+  expiryDate      DateTime? @map("expiry_date") @db.Date
+  fileUrl         String?   @map("file_url")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  sme SmeProfile @relation(fields: [smeId], references: [smeId], onDelete: Cascade)
+
+  @@map("sme_certifications")
+}
+
+// 7) COURSES / TRAININGS
+model Course {
+  courseId         BigInt   @id @default(autoincrement()) @map("course_id")
+  smeId            BigInt   @map("sme_id")
+  title            String   @db.VarChar(250)
+  description      String?
+  targetAudience   String?  @map("target_audience") @db.VarChar(250)
+  durationMinutes  Int?     @map("duration_minutes")
+  deliveryMode     String   @default("TEAMS") @map("delivery_mode") @db.VarChar(30)
+  materialsUrl     String?  @map("materials_url")
+  isPublished      Boolean  @default(false) @map("is_published")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  sme SmeProfile @relation(fields: [smeId], references: [smeId], onDelete: Cascade)
+
+  @@map("courses")
+}
+
+// NOTE: Prisma doesn't support database views directly.
+// You'll need to use raw SQL queries or implement the v_skill_sme_rank view
+// logic in your application code or use Prisma's queryRaw for complex queries.

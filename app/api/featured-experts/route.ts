@@ -1,0 +1,68 @@
+import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+
+export async function GET() {
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const adapter = new PrismaPg(pool);
+  const prisma = new PrismaClient({ adapter });
+  
+  try {
+    // Fetch top SMEs based on total endorsements across all their skills
+    const smeProfiles = await prisma.smeProfile.findMany({
+      where: {
+        status: "APPROVED",
+      },
+      include: {
+        employee: true,
+        skills: {
+          where: {
+            isActive: true,
+          },
+          include: {
+            skill: true,
+            endorsements: true,
+          },
+        },
+      },
+      take: 50, // Get more than we need to sort and filter
+    });
+
+    // Calculate total endorsements for each SME
+    const smesWithEndorsements = smeProfiles
+      .map((sme) => {
+        const totalEndorsements = sme.skills.reduce(
+          (sum, skill) => sum + skill.endorsements.length,
+          0
+        );
+        
+        // Get primary skill (the one with most endorsements)
+        const primarySkill = sme.skills.sort(
+          (a, b) => b.endorsements.length - a.endorsements.length
+        )[0];
+
+        return {
+          name: sme.employee.fullName,
+          role: sme.employee.position || "SME",
+          skills: primarySkill?.skill.skillName || "Multiple Skills",
+          endorsements: totalEndorsements,
+          verified: totalEndorsements >= 50, // Mark as verified if 50+ endorsements
+          avatarUrl: sme.employee.avatarUrl,
+        };
+      })
+      .sort((a, b) => b.endorsements - a.endorsements)
+      .slice(0, 4); // Get top 4
+
+    return NextResponse.json(smesWithEndorsements);
+  } catch (error) {
+    console.error("Error fetching featured experts:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch featured experts" },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
+    await pool.end();
+  }
+}
