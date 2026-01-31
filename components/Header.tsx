@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { signOut } from "@/lib/auth-client";
+import { NotificationBell } from "@/components/NotificationBell";
 
 // Figma asset URLs (valid for 7 days)
 const icons = {
@@ -106,6 +107,9 @@ export function Header() {
           </Link>
 
           <div className="flex items-center gap-6">
+            {/* Notification Bell - visible when authenticated */}
+            {!isLoading && user && <NotificationBell />}
+
             {/* Dashboard link - only visible to Managers */}
             {!isLoading && isManager && (
               <Link

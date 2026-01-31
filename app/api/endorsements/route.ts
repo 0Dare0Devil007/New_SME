@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import prisma from "@/lib/prisma";
+import { createEndorsementNotification } from "@/lib/notifications";
 
 // POST - Create a new endorsement
 export async function POST(request: NextRequest) {
@@ -48,6 +49,7 @@ export async function POST(request: NextRequest) {
             employee: true,
           },
         },
+        skill: true,
       },
     });
 
@@ -99,6 +101,16 @@ export async function POST(request: NextRequest) {
           },
         },
       },
+    });
+
+    // Trigger notification
+    await createEndorsementNotification({
+      smeEmployeeId: smeSkill.sme.employeeId,
+      endorserName: employee.fullName,
+      endorserPosition: employee.position,
+      skillName: smeSkill.skill.skillName,
+      endorsementId: endorsement.endorsementId,
+      comment: endorsement.comment,
     });
 
     return NextResponse.json({

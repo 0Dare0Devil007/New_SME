@@ -106,6 +106,8 @@ model Employee {
   nominationsAsCoord    SmeNomination[]        @relation("CoordinatorDecision")
   departmentCoordinators DepartmentCoordinator[]
   endorsements          Endorsement[]
+  notifications         Notification[]
+  notificationPreferences NotificationPreference?
 
   @@index([managerId], map: "idx_employees_manager")
   @@index([siteName], map: "idx_employees_site_name")
@@ -288,6 +290,38 @@ model Course {
   sme SmeProfile @relation(fields: [smeId], references: [smeId], onDelete: Cascade)
 
   @@map("courses")
+}
+
+// 8) NOTIFICATIONS
+model Notification {
+  notificationId BigInt   @id @default(autoincrement()) @map("notification_id")
+  employeeId     BigInt   @map("employee_id")
+  type           String   @db.VarChar(50)
+  title          String   @db.VarChar(250)
+  message        String
+  actionUrl      String?  @map("action_url")
+  relatedId      BigInt?  @map("related_id")
+  isRead         Boolean  @default(false) @map("is_read")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  employee Employee @relation(fields: [employeeId], references: [employeeId], onDelete: Cascade)
+
+  @@index([employeeId, isRead], map: "idx_notifications_employee_read")
+  @@index([createdAt], map: "idx_notifications_created_at")
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  employeeId     BigInt  @id @map("employee_id")
+  emailEnabled   Boolean @default(true) @map("email_enabled")
+  inAppEnabled   Boolean @default(true) @map("in_app_enabled")
+  endorsements   Boolean @default(true)
+  nominations    Boolean @default(true)
+  profileChanges Boolean @default(true) @map("profile_changes")
+
+  employee Employee @relation(fields: [employeeId], references: [employeeId], onDelete: Cascade)
+
+  @@map("notification_preferences")
 }
 
 // NOTE: Prisma doesn't support database views directly.
