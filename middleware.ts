@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
 // Routes that don't require authentication
-const publicRoutes = ["/sign-in", "/sign-up"];
-const publicPrefixes = ["/api/auth"];
+const publicRoutes = ["/sign-in", "/sign-up", "/"];
+const publicPrefixes = ["/api/auth", "/api/featured-experts", "/api/skills", "/api/experts"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

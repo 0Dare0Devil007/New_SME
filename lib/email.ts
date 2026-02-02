@@ -1,6 +1,28 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+/**
+ * SMTP Configuration
+ * TODO: Configure these environment variables in your work environment:
+ * - SMTP_HOST: Your SMTP relay server hostname
+ * - SMTP_PORT: SMTP port (typically 25, 465, or 587)
+ * - SMTP_SECURE: Set to "true" for port 465 (SSL), "false" for others
+ * - SMTP_USER: (Optional) SMTP username if authentication is required
+ * - SMTP_PASS: (Optional) SMTP password if authentication is required
+ */
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || "localhost",
+  port: parseInt(process.env.SMTP_PORT || "25"),
+  secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
+  // Uncomment and configure if your relay requires authentication:
+  // auth: {
+  //   user: process.env.SMTP_USER,
+  //   pass: process.env.SMTP_PASS,
+  // },
+  // For internal relay servers that don't require auth, you may need:
+  tls: {
+    rejectUnauthorized: false, // Allow self-signed certificates (common in internal networks)
+  },
+});
 
 interface EndorsementEmailData {
   smeName: string;
@@ -189,15 +211,16 @@ function generateEndorsementEmailText(data: EndorsementEmailData): string {
 }
 
 /**
- * Send a notification email
+ * Send a notification email via SMTP
  */
 export async function sendNotificationEmail(
   params: SendEmailParams
 ): Promise<void> {
   try {
-    // Skip if no API key configured
-    if (!process.env.RESEND_API_KEY) {
-      console.warn("RESEND_API_KEY not configured, skipping email notification");
+    // Skip if SMTP is not configured
+    // TODO: Remove this check once SMTP is configured in your work environment
+    if (!process.env.SMTP_HOST) {
+      console.warn("SMTP_HOST not configured, skipping email notification");
       return;
     }
 
@@ -214,7 +237,7 @@ export async function sendNotificationEmail(
     const fromEmail =
       process.env.NOTIFICATION_FROM_EMAIL || "noreply@yourdomain.com";
 
-    await resend.emails.send({
+    await transporter.sendMail({
       from: fromEmail,
       to: params.to,
       subject: params.subject,

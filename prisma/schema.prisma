@@ -84,7 +84,7 @@ model Employee {
   empNumber      String   @unique @map("emp_number") @db.VarChar(50)
   fullName       String   @map("full_name") @db.VarChar(200)
   email          String   @unique @db.VarChar(320)
-  avatarUrl      String?  @map("avatar_url")
+  imageUrl       String?  @map("image_url")
   position       String?  @db.VarChar(200)
   siteName       String?  @map("site_name") @db.VarChar(200)
   departmentName String?  @map("department_name") @db.VarChar(200)
@@ -108,6 +108,7 @@ model Employee {
   endorsements          Endorsement[]
   notifications         Notification[]
   notificationPreferences NotificationPreference?
+  courseEnrollments     CourseEnrollment[]
 
   @@index([managerId], map: "idx_employees_manager")
   @@index([siteName], map: "idx_employees_site_name")
@@ -155,7 +156,7 @@ model Skill {
   skillName   String    @unique @map("skill_name") @db.VarChar(200)
   categoryId  BigInt?   @map("category_id")
   description String?
-  iconUrl     String?   @map("icon_url")
+  imageUrl    String?   @map("image_url")
   isActive    Boolean   @default(true) @map("is_active")
   createdBy   BigInt?   @map("created_by")
   createdAt   DateTime  @default(now()) @map("created_at")
@@ -175,10 +176,7 @@ model SmeProfile {
   employeeId   BigInt   @unique @map("employee_id")
   bio          String?
   languages    String?  @db.VarChar(200)
-  availability String?  @db.VarChar(200)
-  contactPhone String?  @map("contact_phone") @db.VarChar(50)
-  contactPref  String?  @map("contact_pref") @db.VarChar(50)
-  teamsLink    String?  @map("teams_link")
+  availability String?  @db.Text
   status       String   @default("PENDING") @db.VarChar(30)
   statusReason String?  @map("status_reason")
   createdAt    DateTime @default(now()) @map("created_at")
@@ -275,21 +273,49 @@ model SmeCertification {
 
 // 7) COURSES / TRAININGS
 model Course {
-  courseId         BigInt   @id @default(autoincrement()) @map("course_id")
-  smeId            BigInt   @map("sme_id")
-  title            String   @db.VarChar(250)
+  courseId         BigInt    @id @default(autoincrement()) @map("course_id")
+  smeId            BigInt    @map("sme_id")
+  title            String    @db.VarChar(250)
   description      String?
-  targetAudience   String?  @map("target_audience") @db.VarChar(250)
-  durationMinutes  Int?     @map("duration_minutes")
-  deliveryMode     String   @default("TEAMS") @map("delivery_mode") @db.VarChar(30)
-  materialsUrl     String?  @map("materials_url")
-  isPublished      Boolean  @default(false) @map("is_published")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  targetAudience   String?   @map("target_audience") @db.VarChar(250)
+  durationMinutes  Int?      @map("duration_minutes")
+  deliveryMode     String    @default("TEAMS") @map("delivery_mode") @db.VarChar(30)
+  materialsUrl     String?   @map("materials_url")
+  scheduledDate    DateTime? @map("scheduled_date")
+  maxCapacity      Int?      @map("max_capacity")
+  location         String?   @db.VarChar(250)
+  isPublished      Boolean   @default(false) @map("is_published")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
-  sme SmeProfile @relation(fields: [smeId], references: [smeId], onDelete: Cascade)
+  sme         SmeProfile         @relation(fields: [smeId], references: [smeId], onDelete: Cascade)
+  enrollments CourseEnrollment[]
 
+  @@index([scheduledDate], map: "idx_courses_scheduled_date")
   @@map("courses")
+}
+
+// 8) COURSE ENROLLMENTS
+model CourseEnrollment {
+  enrollmentId   BigInt    @id @default(autoincrement()) @map("enrollment_id")
+  courseId       BigInt    @map("course_id")
+  employeeId     BigInt    @map("employee_id")
+  status         String    @default("ENROLLED") @db.VarChar(30) // ENROLLED, COMPLETED, CANCELLED, WAITLISTED
+  enrolledAt     DateTime  @default(now()) @map("enrolled_at")
+  completedAt    DateTime? @map("completed_at")
+  cancelledAt    DateTime? @map("cancelled_at")
+  feedback       String?
+  rating         Int?      // 1-5 rating
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  course   Course   @relation(fields: [courseId], references: [courseId], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [employeeId], onDelete: Cascade)
+
+  @@unique([courseId, employeeId], map: "uq_course_enrollment")
+  @@index([employeeId], map: "idx_enrollments_employee")
+  @@index([status], map: "idx_enrollments_status")
+  @@map("course_enrollments")
 }
 
 // 8) NOTIFICATIONS

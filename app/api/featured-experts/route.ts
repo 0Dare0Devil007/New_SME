@@ -37,12 +37,13 @@ export async function GET() {
         )[0];
 
         return {
+          id: sme.smeId.toString(),
           name: sme.employee.fullName,
           role: sme.employee.position || "SME",
           skills: primarySkill?.skill.skillName || "Multiple Skills",
           endorsements: totalEndorsements,
           verified: totalEndorsements >= 50, // Mark as verified if 50+ endorsements
-          avatarUrl: sme.employee.avatarUrl,
+          imageUrl: sme.employee.imageUrl,
         };
       })
       .sort((a, b) => b.endorsements - a.endorsements)

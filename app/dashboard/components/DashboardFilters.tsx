@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, RefreshCw, Download, ChevronDown } from "lucide-react";
+import { RiCalendarLine, RiRefreshLine, RiDownloadLine, RiArrowDownSLine } from "@remixicon/react";
 import { cn } from "@/lib/utils";
 
 interface DashboardFiltersProps {
@@ -47,13 +47,13 @@ export default function DashboardFilters({
       <div className="relative">
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="flex items-center gap-2 px-3.5 py-2 bg-[#f3f3f5] hover:bg-gray-200 rounded-lg border border-transparent transition-colors"
+          className="flex items-center gap-2 px-3.5 py-2 bg-muted hover:bg-accent rounded-lg border border-transparent transition-colors"
         >
-          <Calendar className="w-4 h-4 text-gray-700" />
-          <span className="text-sm font-medium text-gray-900">{selectedLabel}</span>
-          <ChevronDown
+          <RiCalendarLine className="w-4 h-4 text-foreground" />
+          <span className="text-sm font-medium text-foreground">{selectedLabel}</span>
+          <RiArrowDownSLine
             className={cn(
-              "w-4 h-4 text-gray-700 transition-transform",
+              "w-4 h-4 text-foreground transition-transform",
               isDropdownOpen && "rotate-180"
             )}
           />
@@ -66,16 +66,16 @@ export default function DashboardFilters({
               className="fixed inset-0 z-10"
               onClick={() => setIsDropdownOpen(false)}
             />
-            <div className="absolute top-full left-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+            <div className="absolute top-full left-0 mt-2 w-40 bg-popover rounded-lg shadow-lg border border-border py-1 z-20">
               {DATE_RANGES.map((range) => (
                 <button
                   key={range.value}
                   onClick={() => handleDateRangeSelect(range.value)}
                   className={cn(
-                    "w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors",
+                    "w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors",
                     selectedRange === range.value
-                      ? "text-blue-600 font-medium bg-blue-50"
-                      : "text-gray-700"
+                      ? "text-primary font-medium bg-primary/10"
+                      : "text-popover-foreground"
                   )}
                 >
                   {range.label}
@@ -90,24 +90,24 @@ export default function DashboardFilters({
       <button
         onClick={handleRefresh}
         disabled={isRefreshing}
-        className="flex items-center gap-2 px-3 py-2 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted rounded-lg border border-border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <RefreshCw
+        <RiRefreshLine
           className={cn(
-            "w-4 h-4 text-gray-700",
+            "w-4 h-4 text-foreground",
             isRefreshing && "animate-spin"
           )}
         />
-        <span className="text-sm font-medium text-gray-900">Refresh</span>
+        <span className="text-sm font-medium text-foreground">Refresh</span>
       </button>
 
       {/* Export Button */}
       <button
         onClick={onExport}
-        className="flex items-center gap-2 px-3 py-2 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 transition-colors"
+        className="flex items-center gap-2 px-3 py-2 bg-card hover:bg-muted rounded-lg border border-border transition-colors"
       >
-        <Download className="w-4 h-4 text-gray-700" />
-        <span className="text-sm font-medium text-gray-900">Export</span>
+        <RiDownloadLine className="w-4 h-4 text-foreground" />
+        <span className="text-sm font-medium text-foreground">Export</span>
       </button>
     </div>
   );

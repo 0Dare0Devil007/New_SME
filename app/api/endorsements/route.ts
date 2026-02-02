@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
           select: {
             fullName: true,
             position: true,
-            avatarUrl: true,
+            imageUrl: true,
           },
         },
       },

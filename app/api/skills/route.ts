@@ -23,8 +23,9 @@ export async function GET(request: Request) {
       } : {})
     };
 
-    // Fetch skills with pagination and total count in parallel
-    const [skills, totalCount] = await Promise.all([
+    // Fetch skills with pagination, total count, and expert counts in parallel
+    const [skills, totalCount, expertCounts] = await Promise.all([
+      // Main query: Get skills with top 6 experts (for display)
       prisma.skill.findMany({
         where: whereClause,
         include: {
@@ -49,7 +50,7 @@ export async function GET(request: Request) {
                 _count: "desc",
               },
             },
-            take: 6, // Get top 6 experts per skill
+            take: 6, // Get top 6 experts per skill (for display only)
           },
         },
         orderBy: {
@@ -58,15 +59,35 @@ export async function GET(request: Request) {
         skip: skip,
         take: limit,
       }),
-      prisma.skill.count({ where: whereClause })
+      // Count total skills for pagination
+      prisma.skill.count({ where: whereClause }),
+      // Count total experts per skill (no limit) - optimized with groupBy
+      prisma.smeSkill.groupBy({
+        by: ['skillId'],
+        where: {
+          isActive: true,
+          sme: {
+            status: "APPROVED",
+          },
+          skill: whereClause,
+        },
+        _count: {
+          smeSkillId: true,
+        },
+      }),
     ]);
+
+    // Create a map of skillId -> expert count for O(1) lookup
+    const expertCountMap = new Map(
+      expertCounts.map((ec) => [ec.skillId, ec._count.smeSkillId])
+    );
 
     // Transform the data to match the frontend structure
     const transformedSkills = skills.map((skill) => {
       const topExperts = skill.smeSkills.map((smeSkill) => ({
         name: smeSkill.sme.employee.fullName,
         endorsementCount: smeSkill.endorsements.length,
-        avatarUrl: smeSkill.sme.employee.avatarUrl,
+        imageUrl: smeSkill.sme.employee.imageUrl,
       }));
 
       // Define gradient colors based on skill name
@@ -83,10 +104,10 @@ export async function GET(request: Request) {
 
       return {
         name: skill.skillName,
-        experts: skill.smeSkills.length,
+        experts: expertCountMap.get(skill.skillId) || 0, // Get actual total count from optimized query
         description: skill.description,
         gradient: gradients[skill.skillName] || "from-blue-500 to-blue-700",
-        icon: skill.iconUrl || "",
+        imageUrl: skill.imageUrl || "",
         topExperts: topExperts.map((e) => e.name),
       };
     });

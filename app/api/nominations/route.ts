@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
             position: true,
             departmentName: true,
             siteName: true,
-            avatarUrl: true,
+            imageUrl: true,
             smeProfile: {
               select: {
                 smeId: true,
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
           position: nom.nominee.position || "Not specified",
           department: nom.nominee.departmentName || "Not specified",
           siteName: nom.nominee.siteName || "Not specified",
-          avatarUrl: nom.nominee.avatarUrl,
+          imageUrl: nom.nominee.imageUrl,
           hasProfile: !!nom.nominee.smeProfile,
           profileStatus: nom.nominee.smeProfile?.status || null,
         },

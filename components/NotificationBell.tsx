@@ -9,6 +9,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { RiNotification3Line } from "@remixicon/react";
 
 interface Notification {
   notificationId: string;
@@ -119,20 +120,8 @@ export function NotificationBell() {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
-          <svg
-            className="w-6 h-6 text-gray-700"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-            />
-          </svg>
+        <button className="relative p-2 hover:bg-muted rounded-lg transition-colors">
+          <RiNotification3Line className="w-6 h-6 text-foreground" />
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
@@ -144,11 +133,11 @@ export function NotificationBell() {
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-96 p-0" align="end">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="font-semibold text-lg">Notifications</h3>
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h3 className="font-semibold text-lg text-foreground">Notifications</h3>
           <Link
             href="/notifications"
-            className="text-sm text-blue-600 hover:text-blue-700"
+            className="text-sm text-primary hover:text-primary/80"
             onClick={() => setIsOpen(false)}
           >
             View all
@@ -156,11 +145,11 @@ export function NotificationBell() {
         </div>
         <ScrollArea className="h-[400px]">
           {isLoading ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-8 text-center text-muted-foreground">
               Loading...
             </div>
           ) : notifications.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-8 text-center text-muted-foreground">
               <div className="text-4xl mb-2">🔔</div>
               <p className="font-medium">No notifications yet</p>
               <p className="text-sm mt-1">
@@ -172,8 +161,8 @@ export function NotificationBell() {
               {notifications.map((notification) => (
                 <div
                   key={notification.notificationId}
-                  className={`p-4 border-b hover:bg-gray-50 transition-colors cursor-pointer ${
-                    !notification.isRead ? "bg-blue-50" : ""
+                  className={`p-4 border-b border-border hover:bg-muted transition-colors cursor-pointer ${
+                    !notification.isRead ? "bg-primary/10" : ""
                   }`}
                   onClick={() => {
                     if (!notification.isRead) {
@@ -190,18 +179,18 @@ export function NotificationBell() {
                       {getNotificationIcon(notification.type)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-gray-900">
+                      <p className="font-medium text-sm text-foreground">
                         {notification.title}
                       </p>
-                      <p className="text-sm text-gray-600 mt-1 whitespace-pre-line line-clamp-2">
+                      <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line line-clamp-2">
                         {notification.message}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {getRelativeTime(notification.createdAt)}
                       </p>
                     </div>
                     {!notification.isRead && (
-                      <div className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0 mt-1.5"></div>
+                      <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5"></div>
                     )}
                   </div>
                 </div>

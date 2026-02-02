@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
             select: {
               fullName: true,
               departmentName: true,
-              avatarUrl: true,
+              imageUrl: true,
             },
           },
           nominatedBy: {
@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
               fullName: true,
               position: true,
               departmentName: true,
-              avatarUrl: true,
+              imageUrl: true,
             },
           },
           skills: {
@@ -211,7 +211,7 @@ export async function GET(request: NextRequest) {
       name: sme.employee.fullName,
       position: sme.employee.position,
       department: sme.employee.departmentName,
-      avatarUrl: sme.employee.avatarUrl,
+      imageUrl: sme.employee.imageUrl,
       totalEndorsements: sme.skills.reduce(
         (sum, skill) => sum + skill._count.endorsements,
         0
@@ -384,7 +384,7 @@ export async function GET(request: NextRequest) {
         nominee: {
           name: nom.nominee.fullName,
           department: nom.nominee.departmentName,
-          avatarUrl: nom.nominee.avatarUrl,
+          imageUrl: nom.nominee.imageUrl,
         },
         nominatedBy: nom.nominatedBy.fullName,
       })),

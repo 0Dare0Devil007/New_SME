@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
         position: true,
         departmentName: true,
         siteName: true,
-        avatarUrl: true,
+        imageUrl: true,
       },
       take: limit,
       orderBy: {
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
         position: emp.position || "Not specified",
         department: emp.departmentName || "Not specified",
         siteName: emp.siteName || "Not specified",
-        avatarUrl: emp.avatarUrl,
+        imageUrl: emp.imageUrl,
       })),
     });
   } catch (error) {

@@ -3,27 +3,27 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  Users,
-  Award,
-  ThumbsUp,
-  Clock,
-  TrendingUp,
-  Building,
-  Loader2,
-  CheckCircle2,
-  XCircle,
-  ArrowUpRight,
-  BarChart3,
-  BookOpen,
-  GraduationCap,
-  MapPin,
-  Search,
-  Eye,
-  Timer,
-  Target,
-  Zap,
-  Star,
-} from "lucide-react";
+  RiTeamLine,
+  RiAwardLine,
+  RiThumbUpLine,
+  RiTimeLine,
+  RiLineChartLine,
+  RiBuilding2Line,
+  RiLoader4Line,
+  RiCheckboxCircleLine,
+  RiCloseCircleLine,
+  RiArrowRightUpLine,
+  RiBarChartLine,
+  RiBookLine,
+  RiGraduationCapLine,
+  RiMapPinLine,
+  RiSearchLine,
+  RiEyeLine,
+  RiTimer2Line,
+  RiFocusLine,
+  RiFlashlightLine,
+  RiStarLine,
+} from "@remixicon/react";
 import DepartmentBarChart from "./components/DepartmentBarChart";
 import SitePieChart from "./components/SitePieChart";
 import TrainingAreaChart from "./components/TrainingAreaChart";
@@ -68,7 +68,7 @@ interface DashboardStats {
     nominee: {
       name: string;
       department?: string;
-      avatarUrl?: string;
+      imageUrl?: string;
     };
     nominatedBy: string;
   }>;
@@ -77,7 +77,7 @@ interface DashboardStats {
     name: string;
     position?: string;
     department?: string;
-    avatarUrl?: string;
+    imageUrl?: string;
     totalEndorsements: number;
   }>;
   topSearchedSkills: Array<{
@@ -207,20 +207,20 @@ export default function DashboardClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <RiLoader4Line className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   if (error || !stats) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error || "Failed to load dashboard"}</p>
+          <p className="text-destructive mb-4">{error || "Failed to load dashboard"}</p>
           <button
             onClick={() => window.location.reload()}
-            className="text-blue-600 hover:underline"
+            className="text-primary hover:underline"
           >
             Try again
           </button>
@@ -232,40 +232,40 @@ export default function DashboardClient() {
   const getStatusBadge = (status: string) => {
     if (status === "SUBMITTED") {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
-          <Clock className="w-3 h-3" />
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-status-pending/20 text-status-pending">
+          <RiTimeLine className="w-3 h-3" />
           Pending
         </span>
       );
     }
     if (status === "APPROVED") {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-          <CheckCircle2 className="w-3 h-3" />
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-status-success/20 text-status-success">
+          <RiCheckboxCircleLine className="w-3 h-3" />
           Approved
         </span>
       );
     }
     if (status === "REJECTED") {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
-          <XCircle className="w-3 h-3" />
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-status-error/20 text-status-error">
+          <RiCloseCircleLine className="w-3 h-3" />
           Rejected
         </span>
       );
     }
-    return <span className="text-xs text-gray-500">{status}</span>;
+    return <span className="text-xs text-muted-foreground">{status}</span>;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-8 py-12">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Management Dashboard</h1>
-              <p className="text-gray-600">Comprehensive analytics and insights into SME program</p>
+              <h1 className="text-3xl font-bold text-foreground mb-2">Management Dashboard</h1>
+              <p className="text-muted-foreground">Comprehensive analytics and insights into SME program</p>
             </div>
             <DashboardFilters
               onRefresh={handleRefresh}
@@ -278,91 +278,91 @@ export default function DashboardClient() {
         {/* Top Stats Row - 4 cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Total SMEs */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                <RiTeamLine className="w-6 h-6 text-primary" />
               </div>
-              <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                +{stats.trends.smesGrowth}% <TrendingUp className="w-3 h-3 inline" />
+              <span className="text-xs font-medium text-status-success bg-status-success/10 px-2 py-1 rounded-full">
+                +{stats.trends.smesGrowth}% <RiLineChartLine className="w-3 h-3 inline" />
               </span>
             </div>
-            <p className="text-3xl font-bold text-gray-900">{stats.overview.totalSmes}</p>
-            <p className="text-sm text-gray-500">Total SMEs</p>
-            <p className="text-xs text-gray-400 mt-2">from last month</p>
+            <p className="text-3xl font-bold text-foreground">{stats.overview.totalSmes}</p>
+            <p className="text-sm text-muted-foreground">Total SMEs</p>
+            <p className="text-xs text-muted-foreground mt-2">from last month</p>
           </div>
 
           {/* Active Courses */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 bg-chart-2/10 rounded-xl flex items-center justify-center">
+                <RiBookLine className="w-6 h-6 text-chart-2" />
               </div>
-              <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                +{stats.trends.coursesGrowth}% <TrendingUp className="w-3 h-3 inline" />
+              <span className="text-xs font-medium text-status-success bg-status-success/10 px-2 py-1 rounded-full">
+                +{stats.trends.coursesGrowth}% <RiLineChartLine className="w-3 h-3 inline" />
               </span>
             </div>
-            <p className="text-3xl font-bold text-gray-900">{stats.overview.activeCourses}</p>
-            <p className="text-sm text-gray-500">Active Courses</p>
-            <p className="text-xs text-gray-400 mt-2">from last month</p>
+            <p className="text-3xl font-bold text-foreground">{stats.overview.activeCourses}</p>
+            <p className="text-sm text-muted-foreground">Active Courses</p>
+            <p className="text-xs text-muted-foreground mt-2">from last month</p>
           </div>
 
           {/* Total Endorsements */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                <ThumbsUp className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 bg-status-success/10 rounded-xl flex items-center justify-center">
+                <RiThumbUpLine className="w-6 h-6 text-status-success" />
               </div>
-              <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                +{stats.trends.endorsementsGrowth}% <TrendingUp className="w-3 h-3 inline" />
+              <span className="text-xs font-medium text-status-success bg-status-success/10 px-2 py-1 rounded-full">
+                +{stats.trends.endorsementsGrowth}% <RiLineChartLine className="w-3 h-3 inline" />
               </span>
             </div>
-            <p className="text-3xl font-bold text-gray-900">{stats.overview.totalEndorsements}</p>
-            <p className="text-sm text-gray-500">Total Endorsements</p>
-            <p className="text-xs text-gray-400 mt-2">from last month</p>
+            <p className="text-3xl font-bold text-foreground">{stats.overview.totalEndorsements}</p>
+            <p className="text-sm text-muted-foreground">Total Endorsements</p>
+            <p className="text-xs text-muted-foreground mt-2">from last month</p>
           </div>
 
           {/* Students Trained */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                <GraduationCap className="w-6 h-6 text-orange-600" />
+              <div className="w-12 h-12 bg-chart-4/10 rounded-xl flex items-center justify-center">
+                <RiGraduationCapLine className="w-6 h-6 text-chart-4" />
               </div>
-              <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                +{stats.trends.studentsGrowth}% <TrendingUp className="w-3 h-3 inline" />
+              <span className="text-xs font-medium text-status-success bg-status-success/10 px-2 py-1 rounded-full">
+                +{stats.trends.studentsGrowth}% <RiLineChartLine className="w-3 h-3 inline" />
               </span>
             </div>
-            <p className="text-3xl font-bold text-gray-900">{stats.overview.studentsTrained}</p>
-            <p className="text-sm text-gray-500">Students Trained</p>
-            <p className="text-xs text-gray-400 mt-2">from last month</p>
+            <p className="text-3xl font-bold text-foreground">{stats.overview.studentsTrained}</p>
+            <p className="text-sm text-muted-foreground">Students Trained</p>
+            <p className="text-xs text-muted-foreground mt-2">from last month</p>
           </div>
         </div>
 
         {/* Charts Row 1 - SMEs by Department (Bar) & SMEs by Site (Pie) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* SMEs by Department */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <div className="flex items-center gap-2 mb-6">
-              <BarChart3 className="w-5 h-5 text-blue-600" />
-              <h2 className="text-lg font-semibold text-gray-900">SMEs by Department</h2>
+              <RiBarChartLine className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">SMEs by Department</h2>
             </div>
             {stats.smesByDepartment.length > 0 ? (
               <DepartmentBarChart data={stats.smesByDepartment} />
             ) : (
-              <div className="text-center py-12 text-gray-500">No department data available</div>
+              <div className="text-center py-12 text-muted-foreground">No department data available</div>
             )}
           </div>
 
           {/* SMEs by Site */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <div className="flex items-center gap-2 mb-6">
-              <MapPin className="w-5 h-5 text-purple-600" />
-              <h2 className="text-lg font-semibold text-gray-900">SMEs by Site</h2>
+              <RiMapPinLine className="w-5 h-5 text-chart-2" />
+              <h2 className="text-lg font-semibold text-foreground">SMEs by Site</h2>
             </div>
             {stats.smesBySite.length > 0 ? (
               <SitePieChart data={stats.smesBySite} />
             ) : (
-              <div className="text-center py-12 text-gray-500">No site data available</div>
+              <div className="text-center py-12 text-muted-foreground">No site data available</div>
             )}
           </div>
         </div>
@@ -370,10 +370,10 @@ export default function DashboardClient() {
         {/* Charts Row 2 - Top Searched Skills & Top Endorsed SMEs */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Top Searched Skills */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <div className="flex items-center gap-2 mb-6">
-              <Search className="w-5 h-5 text-blue-600" />
-              <h2 className="text-lg font-semibold text-gray-900">Top Searched Skills</h2>
+              <RiSearchLine className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">Top Searched Skills</h2>
             </div>
             <div className="space-y-1">
               {stats.topSearchedSkills.map((skill) => (
@@ -391,21 +391,21 @@ export default function DashboardClient() {
           </div>
 
           {/* Top Endorsed SMEs */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Top Endorsed SMEs</h2>
+              <h2 className="text-lg font-semibold text-foreground">Top Endorsed SMEs</h2>
               <Link
                 href="/experts"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
               >
                 View all
-                <ArrowUpRight className="w-4 h-4" />
+                <RiArrowRightUpLine className="w-4 h-4" />
               </Link>
             </div>
 
             {stats.topEndorsedSmes.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <ThumbsUp className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+              <div className="text-center py-8 text-muted-foreground">
+                <RiThumbUpLine className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
                 <p>No endorsements yet</p>
               </div>
             ) : (
@@ -414,15 +414,15 @@ export default function DashboardClient() {
                   <Link
                     key={sme.id}
                     href={`/experts/${sme.id}`}
-                    className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl transition-colors"
+                    className="flex items-center gap-3 p-3 hover:bg-muted rounded-xl transition-colors"
                   >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm">
+                    <div className="w-8 h-8 rounded-full bg-status-pending flex items-center justify-center text-primary-foreground font-bold text-sm">
                       {index + 1}
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm shrink-0">
-                      {sme.avatarUrl ? (
+                    <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold text-sm shrink-0">
+                      {sme.imageUrl ? (
                         <img
-                          src={sme.avatarUrl}
+                          src={sme.imageUrl}
                           alt={sme.name}
                           className="w-full h-full rounded-full object-cover"
                         />
@@ -431,14 +431,14 @@ export default function DashboardClient() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{sme.name}</p>
-                      <p className="text-xs text-gray-500 truncate">
+                      <p className="font-medium text-foreground truncate">{sme.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
                         {sme.department} • {sme.position}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-purple-600">{sme.totalEndorsements}</p>
-                      <p className="text-xs text-gray-400">endorsements</p>
+                      <p className="font-bold text-chart-2">{sme.totalEndorsements}</p>
+                      <p className="text-xs text-muted-foreground">endorsements</p>
                     </div>
                   </Link>
                 ))}
@@ -448,51 +448,51 @@ export default function DashboardClient() {
         </div>
 
         {/* Most Endorsed Skills Table - Full Width */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-8">
           <div className="flex items-center gap-2 mb-6">
-            <Award className="w-5 h-5 text-purple-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Most Endorsed Skills</h2>
+            <RiAwardLine className="w-5 h-5 text-chart-2" />
+            <h2 className="text-lg font-semibold text-foreground">Most Endorsed Skills</h2>
           </div>
           {stats.mostEndorsedSkills.length > 0 ? (
             <MostEndorsedSkillsTable skills={stats.mostEndorsedSkills} />
           ) : (
-            <div className="text-center py-8 text-gray-500">No skill endorsement data available</div>
+            <div className="text-center py-8 text-muted-foreground">No skill endorsement data available</div>
           )}
         </div>
 
         {/* Training Trends Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Training Delivery Trends */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <div className="flex items-center gap-2 mb-6">
-              <TrendingUp className="w-5 h-5 text-blue-600" />
-              <h2 className="text-lg font-semibold text-gray-900">Training Delivery Trends</h2>
+              <RiLineChartLine className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">Training Delivery Trends</h2>
             </div>
             <TrainingAreaChart data={stats.trainingTrends} />
           </div>
 
           {/* Satisfaction Ratings */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <div className="flex items-center gap-2 mb-6">
-              <Star className="w-5 h-5 text-yellow-600" />
-              <h2 className="text-lg font-semibold text-gray-900">Satisfaction Ratings</h2>
+              <RiStarLine className="w-5 h-5 text-status-pending" />
+              <h2 className="text-lg font-semibold text-foreground">Satisfaction Ratings</h2>
             </div>
             <div className="space-y-6">
               {/* Overall Satisfaction */}
-              <div className="text-center pb-6 border-b border-gray-200">
-                <div className="text-5xl font-bold text-gray-900 mb-2">
+              <div className="text-center pb-6 border-b border-border">
+                <div className="text-5xl font-bold text-foreground mb-2">
                   {(
                     stats.trainingTrends.reduce((sum, t) => sum + t.avgSatisfaction, 0) /
                     stats.trainingTrends.length
                   ).toFixed(1)}
-                  <span className="text-2xl text-gray-500">/5</span>
+                  <span className="text-2xl text-muted-foreground">/5</span>
                 </div>
-                <p className="text-sm text-gray-600">Overall Satisfaction</p>
+                <p className="text-sm text-muted-foreground">Overall Satisfaction</p>
                 <div className="flex items-center justify-center gap-1 mt-2">
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
+                    <RiStarLine
                       key={star}
-                      className="w-5 h-5 fill-yellow-400 text-yellow-400"
+                      className="w-5 h-5 fill-status-pending text-status-pending"
                     />
                   ))}
                 </div>
@@ -500,21 +500,21 @@ export default function DashboardClient() {
 
               {/* Metrics Grid */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 rounded-xl p-4 text-center">
-                  <p className="text-2xl font-bold text-blue-600">4.8</p>
-                  <p className="text-xs text-gray-600 mt-1">Course Quality</p>
+                <div className="bg-primary/10 rounded-xl p-4 text-center">
+                  <p className="text-2xl font-bold text-primary">4.8</p>
+                  <p className="text-xs text-muted-foreground mt-1">Course Quality</p>
                 </div>
-                <div className="bg-purple-50 rounded-xl p-4 text-center">
-                  <p className="text-2xl font-bold text-purple-600">4.7</p>
-                  <p className="text-xs text-gray-600 mt-1">Instructor Rating</p>
+                <div className="bg-chart-2/10 rounded-xl p-4 text-center">
+                  <p className="text-2xl font-bold text-chart-2">4.7</p>
+                  <p className="text-xs text-muted-foreground mt-1">Instructor Rating</p>
                 </div>
-                <div className="bg-green-50 rounded-xl p-4 text-center">
-                  <p className="text-2xl font-bold text-green-600">4.5</p>
-                  <p className="text-xs text-gray-600 mt-1">Content Relevance</p>
+                <div className="bg-status-success/10 rounded-xl p-4 text-center">
+                  <p className="text-2xl font-bold text-status-success">4.5</p>
+                  <p className="text-xs text-muted-foreground mt-1">Content Relevance</p>
                 </div>
-                <div className="bg-orange-50 rounded-xl p-4 text-center">
-                  <p className="text-2xl font-bold text-orange-600">4.4</p>
-                  <p className="text-xs text-gray-600 mt-1">Platform UX</p>
+                <div className="bg-chart-4/10 rounded-xl p-4 text-center">
+                  <p className="text-2xl font-bold text-chart-4">4.4</p>
+                  <p className="text-xs text-muted-foreground mt-1">Platform UX</p>
                 </div>
               </div>
             </div>
@@ -524,37 +524,37 @@ export default function DashboardClient() {
         {/* Activity Trends Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Platform Activity Trends */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <div className="flex items-center gap-2 mb-6">
-              <Zap className="w-5 h-5 text-yellow-600" />
-              <h2 className="text-lg font-semibold text-gray-900">Platform Activity Trends</h2>
+              <RiFlashlightLine className="w-5 h-5 text-status-pending" />
+              <h2 className="text-lg font-semibold text-foreground">Platform Activity Trends</h2>
             </div>
             <ActivityLineChart data={stats.platformActivity} />
           </div>
 
           {/* Recent Platform Activity */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
             <div className="flex items-center gap-2 mb-6">
-              <Clock className="w-5 h-5 text-blue-600" />
-              <h2 className="text-lg font-semibold text-gray-900">Recent Platform Activity</h2>
+              <RiTimeLine className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">Recent Platform Activity</h2>
             </div>
             <div className="space-y-4">
               {stats.recentActivity.map((activity) => {
                 const icon =
                   activity.type === "search" ? (
-                    <Search className="w-4 h-4 text-blue-600" />
+                    <RiSearchLine className="w-4 h-4 text-primary" />
                   ) : activity.type === "endorsement" ? (
-                    <ThumbsUp className="w-4 h-4 text-purple-600" />
+                    <RiThumbUpLine className="w-4 h-4 text-chart-2" />
                   ) : (
-                    <Eye className="w-4 h-4 text-green-600" />
+                    <RiEyeLine className="w-4 h-4 text-status-success" />
                   );
 
                 const bgColor =
                   activity.type === "search"
-                    ? "bg-blue-100"
+                    ? "bg-primary/10"
                     : activity.type === "endorsement"
-                    ? "bg-purple-100"
-                    : "bg-green-100";
+                    ? "bg-chart-2/10"
+                    : "bg-status-success/10";
 
                 return (
                   <div key={activity.id} className="flex items-start gap-3">
@@ -562,11 +562,11 @@ export default function DashboardClient() {
                       {icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900">{activity.description}</p>
+                      <p className="text-sm text-foreground">{activity.description}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <p className="text-xs text-gray-500">{activity.user.name}</p>
-                        <span className="text-gray-300">•</span>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-muted-foreground">{activity.user.name}</p>
+                        <span className="text-muted-foreground/50">•</span>
+                        <p className="text-xs text-muted-foreground">
                           {new Date(activity.timestamp).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -584,45 +584,45 @@ export default function DashboardClient() {
         {/* Bottom Stats Row - 4 metric cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Average Response Time */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
-              <Timer className="w-6 h-6 text-blue-600" />
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
+            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
+              <RiTimer2Line className="w-6 h-6 text-primary" />
             </div>
-            <p className="text-3xl font-bold text-gray-900">{stats.bottomMetrics.avgResponseTime}</p>
-            <p className="text-sm text-gray-500">Average Response Time</p>
+            <p className="text-3xl font-bold text-foreground">{stats.bottomMetrics.avgResponseTime}</p>
+            <p className="text-sm text-muted-foreground">Average Response Time</p>
           </div>
 
           {/* Course Completion Rate */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
-              <CheckCircle2 className="w-6 h-6 text-green-600" />
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
+            <div className="w-12 h-12 bg-status-success/10 rounded-xl flex items-center justify-center mb-4">
+              <RiCheckboxCircleLine className="w-6 h-6 text-status-success" />
             </div>
-            <p className="text-3xl font-bold text-gray-900">
+            <p className="text-3xl font-bold text-foreground">
               {stats.bottomMetrics.courseCompletionRate}%
             </p>
-            <p className="text-sm text-gray-500">Course Completion Rate</p>
+            <p className="text-sm text-muted-foreground">Course Completion Rate</p>
           </div>
 
           {/* Platform Engagement Score */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
-              <Target className="w-6 h-6 text-purple-600" />
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
+            <div className="w-12 h-12 bg-chart-2/10 rounded-xl flex items-center justify-center mb-4">
+              <RiFocusLine className="w-6 h-6 text-chart-2" />
             </div>
-            <p className="text-3xl font-bold text-gray-900">
+            <p className="text-3xl font-bold text-foreground">
               {stats.bottomMetrics.engagementScore}
             </p>
-            <p className="text-sm text-gray-500">Platform Engagement Score</p>
+            <p className="text-sm text-muted-foreground">Platform Engagement Score</p>
           </div>
 
           {/* Knowledge Sharing Index */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-            <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mb-4">
-              <Users className="w-6 h-6 text-yellow-600" />
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
+            <div className="w-12 h-12 bg-status-pending/10 rounded-xl flex items-center justify-center mb-4">
+              <RiTeamLine className="w-6 h-6 text-status-pending" />
             </div>
-            <p className="text-3xl font-bold text-gray-900">
+            <p className="text-3xl font-bold text-foreground">
               {stats.bottomMetrics.knowledgeSharingIndex}
             </p>
-            <p className="text-sm text-gray-500">Knowledge Sharing Index</p>
+            <p className="text-sm text-muted-foreground">Knowledge Sharing Index</p>
           </div>
         </div>
       </div>

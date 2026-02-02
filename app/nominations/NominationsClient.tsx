@@ -22,7 +22,7 @@ interface Employee {
   position: string;
   department: string;
   siteName: string;
-  avatarUrl?: string;
+  imageUrl?: string;
 }
 
 interface Nomination {
@@ -38,7 +38,7 @@ interface Nomination {
     position: string;
     department: string;
     siteName: string;
-    avatarUrl?: string;
+    imageUrl?: string;
     hasProfile: boolean;
     profileStatus?: string;
   };
@@ -144,7 +144,7 @@ export default function NominationsClient() {
   const getStatusBadge = (status: string, hasProfile: boolean) => {
     if (status === "SUBMITTED" && !hasProfile) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400">
           <Clock className="w-3 h-3" />
           Pending Profile
         </span>
@@ -152,7 +152,7 @@ export default function NominationsClient() {
     }
     if (status === "APPROVED" || hasProfile) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
           <CheckCircle2 className="w-3 h-3" />
           Active SME
         </span>
@@ -160,14 +160,14 @@ export default function NominationsClient() {
     }
     if (status === "REJECTED") {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
           <XCircle className="w-3 h-3" />
           Rejected
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
         <Clock className="w-3 h-3" />
         {status}
       </span>
@@ -175,19 +175,19 @@ export default function NominationsClient() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20">
+    <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-8 py-12">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Nominate SMEs</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold text-foreground mb-2">Nominate SMEs</h1>
+          <p className="text-muted-foreground">
             As a Team Leader, you can nominate team members to become Subject Matter Experts.
           </p>
         </div>
 
         {/* Nomination Form */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <UserPlus className="w-5 h-5 text-blue-600" />
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-8">
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <UserPlus className="w-5 h-5 text-primary" />
             New Nomination
           </h2>
 
@@ -195,9 +195,9 @@ export default function NominationsClient() {
           <div className="relative mb-4">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               {searching ? (
-                <Loader2 className="h-5 w-5 text-gray-400 animate-spin" />
+                <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
               ) : (
-                <Search className="h-5 w-5 text-gray-400" />
+                <Search className="h-5 w-5 text-muted-foreground" />
               )}
             </div>
             <input
@@ -205,13 +205,13 @@ export default function NominationsClient() {
               placeholder="Search employees by name, email, or ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full pl-10 pr-4 py-3 border border-border rounded-xl bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
 
           {/* Search Results */}
           {searchResults.length > 0 && !selectedEmployee && (
-            <div className="border border-gray-200 rounded-xl overflow-hidden mb-4">
+            <div className="border border-border rounded-xl overflow-hidden mb-4">
               {searchResults.map((employee) => (
                 <button
                   key={employee.id}
@@ -219,12 +219,12 @@ export default function NominationsClient() {
                     setSelectedEmployee(employee);
                     setSearchResults([]);
                   }}
-                  className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0 text-left"
+                  className="w-full flex items-center gap-4 p-4 hover:bg-muted transition-colors border-b border-border last:border-0 text-left"
                 >
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold shrink-0">
-                    {employee.avatarUrl ? (
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground font-semibold shrink-0">
+                    {employee.imageUrl ? (
                       <img
-                        src={employee.avatarUrl}
+                        src={employee.imageUrl}
                         alt={employee.name}
                         className="w-full h-full rounded-full object-cover"
                       />
@@ -233,9 +233,9 @@ export default function NominationsClient() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900">{employee.name}</p>
-                    <p className="text-sm text-gray-500">{employee.position}</p>
-                    <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
+                    <p className="font-semibold text-foreground">{employee.name}</p>
+                    <p className="text-sm text-muted-foreground">{employee.position}</p>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                       <span className="flex items-center gap-1">
                         <Building className="w-3 h-3" />
                         {employee.department}
@@ -253,13 +253,13 @@ export default function NominationsClient() {
 
           {/* Selected Employee */}
           {selectedEmployee && (
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+            <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 mb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg">
-                    {selectedEmployee.avatarUrl ? (
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground font-semibold text-lg">
+                    {selectedEmployee.imageUrl ? (
                       <img
-                        src={selectedEmployee.avatarUrl}
+                        src={selectedEmployee.imageUrl}
                         alt={selectedEmployee.name}
                         className="w-full h-full rounded-full object-cover"
                       />
@@ -268,9 +268,9 @@ export default function NominationsClient() {
                     )}
                   </div>
                   <div>
-                    <p className="font-bold text-gray-900 text-lg">{selectedEmployee.name}</p>
-                    <p className="text-gray-600">{selectedEmployee.position}</p>
-                    <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                    <p className="font-bold text-foreground text-lg">{selectedEmployee.name}</p>
+                    <p className="text-muted-foreground">{selectedEmployee.position}</p>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                       <span className="flex items-center gap-1">
                         <Building className="w-4 h-4" />
                         {selectedEmployee.department}
@@ -284,7 +284,7 @@ export default function NominationsClient() {
                 </div>
                 <button
                   onClick={() => setSelectedEmployee(null)}
-                  className="text-gray-400 hover:text-gray-600 p-2"
+                  className="text-muted-foreground hover:text-foreground p-2"
                 >
                   <XCircle className="w-5 h-5" />
                 </button>
@@ -294,12 +294,12 @@ export default function NominationsClient() {
 
           {/* Error/Success Messages */}
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
+            <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive">
               {error}
             </div>
           )}
           {success && (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700">
+            <div className="mb-4 p-4 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-xl text-green-700 dark:text-green-400">
               {success}
             </div>
           )}
@@ -308,7 +308,7 @@ export default function NominationsClient() {
           <button
             onClick={handleNominate}
             disabled={!selectedEmployee || nominating}
-            className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {nominating ? (
               <>
@@ -325,19 +325,19 @@ export default function NominationsClient() {
         </div>
 
         {/* Previous Nominations */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <User className="w-5 h-5 text-blue-600" />
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <User className="w-5 h-5 text-primary" />
             Your Nominations
           </h2>
 
           {loadingNominations ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : nominations.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <User className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <div className="text-center py-12 text-muted-foreground">
+              <User className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
               <p>You haven&apos;t nominated anyone yet.</p>
               <p className="text-sm">Search for an employee above to make your first nomination.</p>
             </div>
@@ -346,13 +346,13 @@ export default function NominationsClient() {
               {nominations.map((nomination) => (
                 <div
                   key={nomination.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100"
+                  className="flex items-center justify-between p-4 bg-muted rounded-xl border border-border"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold shrink-0">
-                      {nomination.nominee.avatarUrl ? (
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground font-semibold shrink-0">
+                      {nomination.nominee.imageUrl ? (
                         <img
-                          src={nomination.nominee.avatarUrl}
+                          src={nomination.nominee.imageUrl}
                           alt={nomination.nominee.name}
                           className="w-full h-full rounded-full object-cover"
                         />
@@ -361,9 +361,9 @@ export default function NominationsClient() {
                       )}
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900">{nomination.nominee.name}</p>
-                      <p className="text-sm text-gray-500">{nomination.nominee.position}</p>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="font-semibold text-foreground">{nomination.nominee.name}</p>
+                      <p className="text-sm text-muted-foreground">{nomination.nominee.position}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
                         Nominated on {new Date(nomination.requestedAt).toLocaleDateString()}
                       </p>
                     </div>

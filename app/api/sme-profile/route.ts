@@ -27,6 +27,7 @@ export async function GET() {
                 skill: true,
               },
             },
+            certifications: true,
           },
         },
       },
@@ -52,9 +53,6 @@ export async function GET() {
       id: profile.smeId.toString(),
       bio: profile.bio || "",
       availability: profile.availability || "",
-      contactPhone: profile.contactPhone || "",
-      contactPref: profile.contactPref || "email",
-      teamsLink: profile.teamsLink || "",
       status: profile.status,
       skills: profile.skills.map((s) => ({
         id: s.smeSkillId.toString(),
@@ -62,6 +60,15 @@ export async function GET() {
         skillName: s.skill.skillName,
         proficiency: s.proficiency || "Intermediate",
         yearsExp: s.yearsExp?.toString() || "0",
+      })),
+      certifications: profile.certifications.map((c) => ({
+        id: c.certificationId.toString(),
+        title: c.title,
+        issuer: c.issuer || "",
+        credentialId: c.credentialId || "",
+        credentialUrl: c.credentialUrl || "",
+        issuedDate: c.issuedDate ? c.issuedDate.toISOString().split("T")[0] : "",
+        expiryDate: c.expiryDate ? c.expiryDate.toISOString().split("T")[0] : "",
       })),
     });
   } catch (error) {
@@ -123,7 +130,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { bio, availability, contactPhone, contactPref, teamsLink, skills } = body;
+    const { bio, availability, skills, certifications } = body;
 
     // Create the SME profile with APPROVED status
     const smeProfile = await prisma.smeProfile.create({
@@ -131,9 +138,6 @@ export async function POST(request: NextRequest) {
         employeeId: employee.employeeId,
         bio: bio || null,
         availability: availability || null,
-        contactPhone: contactPhone || null,
-        contactPref: contactPref || "email",
-        teamsLink: teamsLink || null,
         status: "APPROVED", // Immediately approved
       },
     });
@@ -146,6 +150,28 @@ export async function POST(request: NextRequest) {
           skillId: BigInt(skill.skillId),
           proficiency: skill.proficiency || "Intermediate",
           yearsExp: skill.yearsExp || null,
+        })),
+      });
+    }
+
+    // Add certifications if provided
+    if (certifications && Array.isArray(certifications) && certifications.length > 0) {
+      await prisma.smeCertification.createMany({
+        data: certifications.map((cert: { 
+          title: string; 
+          issuer?: string; 
+          credentialId?: string; 
+          credentialUrl?: string; 
+          issuedDate?: string | null; 
+          expiryDate?: string | null;
+        }) => ({
+          smeId: smeProfile.smeId,
+          title: cert.title,
+          issuer: cert.issuer || null,
+          credentialId: cert.credentialId || null,
+          credentialUrl: cert.credentialUrl || null,
+          issuedDate: cert.issuedDate ? new Date(cert.issuedDate) : null,
+          expiryDate: cert.expiryDate ? new Date(cert.expiryDate) : null,
         })),
       });
     }
@@ -212,7 +238,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { bio, availability, contactPhone, contactPref, teamsLink, skills } = body;
+    const { bio, availability, skills, certifications } = body;
 
     // Update the profile
     const updatedProfile = await prisma.smeProfile.update({
@@ -220,9 +246,6 @@ export async function PUT(request: NextRequest) {
       data: {
         bio: bio !== undefined ? bio : undefined,
         availability: availability !== undefined ? availability : undefined,
-        contactPhone: contactPhone !== undefined ? contactPhone : undefined,
-        contactPref: contactPref !== undefined ? contactPref : undefined,
-        teamsLink: teamsLink !== undefined ? teamsLink : undefined,
       },
     });
 
@@ -241,6 +264,36 @@ export async function PUT(request: NextRequest) {
             skillId: BigInt(skill.skillId),
             proficiency: skill.proficiency || "Intermediate",
             yearsExp: skill.yearsExp || null,
+          })),
+        });
+      }
+    }
+
+    // Update certifications if provided
+    if (certifications && Array.isArray(certifications)) {
+      // Remove existing certifications
+      await prisma.smeCertification.deleteMany({
+        where: { smeId: employee.smeProfile.smeId },
+      });
+
+      // Add new certifications
+      if (certifications.length > 0) {
+        await prisma.smeCertification.createMany({
+          data: certifications.map((cert: { 
+            title: string; 
+            issuer?: string; 
+            credentialId?: string; 
+            credentialUrl?: string; 
+            issuedDate?: string | null; 
+            expiryDate?: string | null;
+          }) => ({
+            smeId: employee.smeProfile!.smeId,
+            title: cert.title,
+            issuer: cert.issuer || null,
+            credentialId: cert.credentialId || null,
+            credentialUrl: cert.credentialUrl || null,
+            issuedDate: cert.issuedDate ? new Date(cert.issuedDate) : null,
+            expiryDate: cert.expiryDate ? new Date(cert.expiryDate) : null,
           })),
         });
       }

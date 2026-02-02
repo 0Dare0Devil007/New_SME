@@ -124,7 +124,7 @@ export async function GET(
         position: smeProfile.employee.position,
         department: smeProfile.employee.departmentName,
         siteName: smeProfile.employee.siteName,
-        avatarUrl: smeProfile.employee.avatarUrl,
+        imageUrl: smeProfile.employee.imageUrl,
       },
       skills: smeProfile.skills.map((s) => ({
         id: s.smeSkillId.toString(),

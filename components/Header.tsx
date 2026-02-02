@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { signOut } from "@/lib/auth-client";
 import { NotificationBell } from "@/components/NotificationBell";
-
-// Figma asset URLs (valid for 7 days)
-const icons = {
-  logo: "https://www.figma.com/api/mcp/asset/5620935f-81a4-4a77-92b8-6f7daf97b245",
-};
+import { ThemeToggle } from "@/components/ThemeToggle";
+import {
+  RiAddLine,
+  RiArrowDownSLine,
+  RiLogoutBoxLine,
+  RiUserStarLine,
+} from "@remixicon/react";
 
 interface UserInfo {
   user: { id: string; email: string; name?: string; image?: string } | null;
@@ -93,28 +95,41 @@ export function Header() {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+    <header className="bg-card border-b border-border shadow-sm sticky top-0 z-50">
       <div className="max-w-[1200px] mx-auto px-8 py-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-[14px] bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-md">
-              <img src={icons.logo} alt="SME Directory" className="w-6 h-6" />
+            <div className="w-11 h-11 rounded-[14px] bg-primary flex items-center justify-center shadow-md">
+              <RiUserStarLine className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">SME Directory</h1>
-              <p className="text-xs text-gray-500">Learning Hub & Expert Network</p>
+              <h1 className="text-xl font-bold text-foreground">SME Directory</h1>
+              <p className="text-xs text-muted-foreground">Learning Hub & Expert Network</p>
             </div>
           </Link>
 
           <div className="flex items-center gap-6">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
             {/* Notification Bell - visible when authenticated */}
             {!isLoading && user && <NotificationBell />}
+
+            {/* Courses link - visible to all authenticated users */}
+            {!isLoading && user && (
+              <Link
+                href="/courses"
+                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+              >
+                Courses
+              </Link>
+            )}
 
             {/* Dashboard link - only visible to Managers */}
             {!isLoading && isManager && (
               <Link
                 href="/dashboard"
-                className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
               >
                 Dashboard
               </Link>
@@ -124,7 +139,7 @@ export function Header() {
             {!isLoading && isTeamLeader && (
               <Link
                 href="/nominations"
-                className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
               >
                 Nominate SMEs
               </Link>
@@ -134,7 +149,7 @@ export function Header() {
             {!isLoading && isCoordinator && (
               <Link
                 href="/department-smes"
-                className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
               >
                 Department SMEs
               </Link>
@@ -144,11 +159,9 @@ export function Header() {
             {!isLoading && needsProfileSetup && (
               <Link
                 href="/sme-profile"
-                className="text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+                className="text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
+                <RiAddLine className="w-4 h-4" />
                 Complete SME Profile
               </Link>
             )}
@@ -157,7 +170,7 @@ export function Header() {
             {!isLoading && isSme && !needsProfileSetup && smeId && (
               <Link
                 href={`/experts/${smeId}`}
-                className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
               >
                 SME Profile
               </Link>
@@ -165,7 +178,7 @@ export function Header() {
 
             {/* Loading state */}
             {isLoading && (
-              <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse" />
+              <div className="w-9 h-9 rounded-full bg-muted animate-pulse" />
             )}
 
             {/* Logged in user */}
@@ -176,67 +189,45 @@ export function Header() {
                   className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                 >
                   <div className="text-right hidden sm:block">
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-foreground">
                       {user.name || "User"}
                     </p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
                   </div>
                   {user.image ? (
                     <img
                       src={user.image}
                       alt={user.name || "User"}
-                      className="w-9 h-9 rounded-full border-2 border-gray-200 object-cover"
+                      className="w-9 h-9 rounded-full border-2 border-border object-cover"
                     />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 border-2 border-gray-200 flex items-center justify-center">
-                      <span className="text-white text-sm font-medium">
+                    <div className="w-9 h-9 rounded-full bg-primary border-2 border-border flex items-center justify-center">
+                      <span className="text-primary-foreground text-sm font-medium">
                         {getInitials(user.name, user.email)}
                       </span>
                     </div>
                   )}
-                  <svg
-                    className={`w-4 h-4 text-gray-500 transition-transform ${
+                  <RiArrowDownSLine
+                    className={`w-4 h-4 text-muted-foreground transition-transform ${
                       showDropdown ? "rotate-180" : ""
                     }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
+                  />
                 </button>
 
                 {/* Dropdown menu */}
                 {showDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                    <div className="px-4 py-2 border-b border-gray-100 sm:hidden">
-                      <p className="text-sm font-medium text-gray-900">
+                  <div className="absolute right-0 mt-2 w-48 bg-popover rounded-lg shadow-lg border border-border py-1 z-50">
+                    <div className="px-4 py-2 border-b border-border sm:hidden">
+                      <p className="text-sm font-medium text-popover-foreground">
                         {user.name || "User"}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
                     <button
                       onClick={handleSignOut}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                      className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-2"
                     >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                        />
-                      </svg>
+                      <RiLogoutBoxLine className="w-4 h-4" />
                       Sign out
                     </button>
                   </div>
@@ -249,13 +240,13 @@ export function Header() {
               <div className="flex items-center gap-3">
                 <Link
                   href="/sign-in"
-                  className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+                  className="text-sm font-medium text-foreground hover:text-primary transition-colors"
                 >
                   Sign in
                 </Link>
                 <Link
                   href="/sign-up"
-                  className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors"
+                  className="text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 px-4 py-2 rounded-lg transition-colors"
                 >
                   Sign up
                 </Link>

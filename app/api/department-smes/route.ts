@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
             position: true,
             departmentName: true,
             siteName: true,
-            avatarUrl: true,
+            imageUrl: true,
           },
         },
         skills: {
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
           position: profile.employee.position || "Not specified",
           department: profile.employee.departmentName || "Not specified",
           siteName: profile.employee.siteName || "Not specified",
-          avatarUrl: profile.employee.avatarUrl,
+          imageUrl: profile.employee.imageUrl,
         },
         skills: profile.skills.map((s) => ({
           id: s.smeSkillId.toString(),

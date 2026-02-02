@@ -84,7 +84,7 @@ export async function GET() {
         position: sme.employee.position || "Subject Matter Expert",
         department: sme.employee.departmentName || "General",
         siteName: sme.employee.siteName || "Main Office",
-        avatarUrl: sme.employee.avatarUrl || undefined,
+        imageUrl: sme.employee.imageUrl || undefined,
         bio: sme.bio || undefined,
         skills,
         certifications,

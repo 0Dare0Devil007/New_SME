@@ -166,15 +166,15 @@ export default function NotificationsPage() {
   const hasUnread = notifications.some((n) => !n.isRead);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
+            <h1 className="text-3xl font-bold text-foreground">Notifications</h1>
             <Link
               href="/notifications/preferences"
-              className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+              className="text-sm text-primary hover:text-primary/80 flex items-center gap-1"
             >
               <svg
                 className="w-4 h-4"
@@ -209,8 +209,8 @@ export default function NotificationsPage() {
                 }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filter === "all"
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-700 hover:bg-gray-100"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-foreground hover:bg-muted"
                 }`}
               >
                 All
@@ -222,8 +222,8 @@ export default function NotificationsPage() {
                 }}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filter === "unread"
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-700 hover:bg-gray-100"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-foreground hover:bg-muted"
                 }`}
               >
                 Unread
@@ -232,7 +232,7 @@ export default function NotificationsPage() {
             {hasUnread && (
               <button
                 onClick={markAllAsRead}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-sm text-primary hover:text-primary/80 font-medium"
               >
                 Mark all as read
               </button>
@@ -242,19 +242,19 @@ export default function NotificationsPage() {
 
         {/* Notifications List */}
         {isLoading ? (
-          <div className="bg-white rounded-lg p-12 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">Loading notifications...</p>
+          <div className="bg-card rounded-lg p-12 text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p className="mt-4 text-muted-foreground">Loading notifications...</p>
           </div>
         ) : notifications.length === 0 ? (
-          <div className="bg-white rounded-lg p-12 text-center">
+          <div className="bg-card rounded-lg p-12 text-center">
             <div className="text-6xl mb-4">🔔</div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            <h2 className="text-xl font-semibold text-foreground mb-2">
               {filter === "unread"
                 ? "No unread notifications"
                 : "No notifications yet"}
             </h2>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               {filter === "unread"
                 ? "You're all caught up!"
                 : "You'll see updates here when you receive endorsements"}
@@ -264,15 +264,15 @@ export default function NotificationsPage() {
           <div className="space-y-6">
             {groupedNotifications.map((group) => (
               <div key={group.title}>
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                   {group.title}
                 </h2>
-                <div className="bg-white rounded-lg divide-y">
+                <div className="bg-card rounded-lg divide-y divide-border">
                   {group.notifications.map((notification) => (
                     <div
                       key={notification.notificationId}
-                      className={`p-4 hover:bg-gray-50 transition-colors ${
-                        !notification.isRead ? "bg-blue-50/50" : ""
+                      className={`p-4 hover:bg-muted transition-colors ${
+                        !notification.isRead ? "bg-primary/5" : ""
                       }`}
                     >
                       <div className="flex gap-4">
@@ -283,7 +283,7 @@ export default function NotificationsPage() {
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
-                                <p className="font-semibold text-gray-900">
+                                <p className="font-semibold text-foreground">
                                   {notification.title}
                                 </p>
                                 {!notification.isRead && (
@@ -292,10 +292,10 @@ export default function NotificationsPage() {
                                   </Badge>
                                 )}
                               </div>
-                              <p className="text-gray-700 whitespace-pre-line mb-2">
+                              <p className="text-muted-foreground whitespace-pre-line mb-2">
                                 {notification.message}
                               </p>
-                              <p className="text-sm text-gray-500">
+                              <p className="text-sm text-muted-foreground">
                                 {getRelativeTime(notification.createdAt)}
                               </p>
                             </div>
@@ -308,7 +308,7 @@ export default function NotificationsPage() {
                                       markAsRead(notification.notificationId);
                                     }
                                   }}
-                                  className="text-blue-600 hover:text-blue-700 text-sm font-medium whitespace-nowrap"
+                                  className="text-primary hover:text-primary/80 text-sm font-medium whitespace-nowrap"
                                 >
                                   View
                                 </Link>
@@ -319,7 +319,7 @@ export default function NotificationsPage() {
                                     notification.notificationId
                                   )
                                 }
-                                className="text-gray-400 hover:text-red-600 transition-colors"
+                                className="text-muted-foreground hover:text-destructive transition-colors"
                                 title="Delete notification"
                               >
                                 <svg
@@ -352,17 +352,17 @@ export default function NotificationsPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-4 py-2 bg-white rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-card rounded-lg text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-muted-foreground">
                   Page {page} of {totalPages}
                 </span>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="px-4 py-2 bg-white rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-card rounded-lg text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>

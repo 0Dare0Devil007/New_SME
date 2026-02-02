@@ -31,7 +31,7 @@ interface SmeProfile {
     position: string;
     department: string;
     siteName: string;
-    avatarUrl?: string;
+    imageUrl?: string;
   };
   skills: Array<{
     id: string;
@@ -138,7 +138,7 @@ export default function DepartmentSmesClient() {
   const getStatusBadge = (status: string) => {
     if (status === "APPROVED") {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
           <CheckCircle2 className="w-3 h-3" />
           Active
         </span>
@@ -146,25 +146,25 @@ export default function DepartmentSmesClient() {
     }
     if (status === "SUSPENDED") {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
           <XCircle className="w-3 h-3" />
           Suspended
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400">
         {status}
       </span>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20">
+    <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-8 py-12">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Department SMEs</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold text-foreground mb-2">Department SMEs</h1>
+          <p className="text-muted-foreground">
             Manage Subject Matter Experts in your department
             {departments.length > 0 && (
               <span className="ml-2 text-sm">
@@ -175,19 +175,19 @@ export default function DepartmentSmesClient() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
             <div className="flex-1 relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
+                <Search className="h-5 w-5 text-muted-foreground" />
               </div>
               <input
                 type="text"
                 placeholder="Search by name or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full pl-10 pr-4 py-3 border border-border rounded-xl bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -199,8 +199,8 @@ export default function DepartmentSmesClient() {
                   onClick={() => setStatusFilter(status)}
                   className={`px-4 py-3 rounded-xl font-medium transition-colors ${
                     statusFilter === status
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-accent"
                   }`}
                 >
                   {status === "ALL" ? "All" : status === "APPROVED" ? "Active" : "Suspended"}
@@ -212,25 +212,25 @@ export default function DepartmentSmesClient() {
 
         {/* Messages */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
+          <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive">
             {error}
           </div>
         )}
         {success && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700">
+          <div className="mb-6 p-4 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-xl text-green-700 dark:text-green-400">
             {success}
           </div>
         )}
 
         {/* SME List */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
+        <div className="bg-card rounded-2xl shadow-sm border border-border">
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : smes.length === 0 ? (
-            <div className="text-center py-16 text-gray-500">
-              <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <div className="text-center py-16 text-muted-foreground">
+              <Users className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
               <p className="font-medium">No SMEs found</p>
               <p className="text-sm">
                 {searchTerm || statusFilter !== "ALL"
@@ -239,16 +239,16 @@ export default function DepartmentSmesClient() {
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-border">
               {smes.map((sme) => (
                 <div key={sme.id} className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4">
                       {/* Avatar */}
-                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg shrink-0">
-                        {sme.employee.avatarUrl ? (
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground font-semibold text-lg shrink-0">
+                        {sme.employee.imageUrl ? (
                           <img
-                            src={sme.employee.avatarUrl}
+                            src={sme.employee.imageUrl}
                             alt={sme.employee.name}
                             className="w-full h-full rounded-full object-cover"
                           />
@@ -260,11 +260,11 @@ export default function DepartmentSmesClient() {
                       {/* Info */}
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-bold text-gray-900 text-lg">{sme.employee.name}</h3>
+                          <h3 className="font-bold text-foreground text-lg">{sme.employee.name}</h3>
                           {getStatusBadge(sme.status)}
                         </div>
-                        <p className="text-gray-600 text-sm">{sme.employee.position}</p>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                        <p className="text-muted-foreground text-sm">{sme.employee.position}</p>
+                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Building className="w-3 h-3" />
                             {sme.employee.department}
@@ -285,7 +285,7 @@ export default function DepartmentSmesClient() {
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/experts/${sme.id}`}
-                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                         title="View Profile"
                       >
                         <Eye className="w-5 h-5" />
@@ -296,8 +296,8 @@ export default function DepartmentSmesClient() {
                         disabled={actionLoading === sme.id}
                         className={`p-2 rounded-lg transition-colors ${
                           sme.status === "APPROVED"
-                            ? "text-gray-400 hover:text-orange-600 hover:bg-orange-50"
-                            : "text-gray-400 hover:text-green-600 hover:bg-green-50"
+                            ? "text-muted-foreground hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                            : "text-muted-foreground hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
                         }`}
                         title={sme.status === "APPROVED" ? "Suspend" : "Activate"}
                       >
@@ -313,7 +313,7 @@ export default function DepartmentSmesClient() {
                       <button
                         onClick={() => setDeleteConfirm(sme.id)}
                         disabled={actionLoading === sme.id}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -327,14 +327,14 @@ export default function DepartmentSmesClient() {
                       {sme.skills.slice(0, 5).map((skill) => (
                         <span
                           key={skill.id}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-100 text-gray-700 text-xs"
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-muted text-muted-foreground text-xs"
                         >
                           {skill.name}
-                          <span className="text-gray-400">({skill.endorsementCount})</span>
+                          <span className="text-muted-foreground/70">({skill.endorsementCount})</span>
                         </span>
                       ))}
                       {sme.skills.length > 5 && (
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-muted-foreground">
                           +{sme.skills.length - 5} more
                         </span>
                       )}
@@ -349,18 +349,18 @@ export default function DepartmentSmesClient() {
         {/* Delete Confirmation Modal */}
         {deleteConfirm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="bg-card rounded-2xl shadow-2xl max-w-md w-full p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                <div className="w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-destructive" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">Delete SME Profile</h3>
-                  <p className="text-sm text-gray-500">This action cannot be undone</p>
+                  <h3 className="text-lg font-bold text-foreground">Delete SME Profile</h3>
+                  <p className="text-sm text-muted-foreground">This action cannot be undone</p>
                 </div>
               </div>
 
-              <p className="text-gray-600 mb-6">
+              <p className="text-muted-foreground mb-6">
                 Are you sure you want to delete this SME profile? All skills, endorsements,
                 certifications, and courses associated with this profile will be permanently removed.
               </p>
@@ -368,14 +368,14 @@ export default function DepartmentSmesClient() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setDeleteConfirm(null)}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50"
+                  className="flex-1 px-4 py-3 border border-border rounded-xl text-foreground font-medium hover:bg-muted"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => handleDelete(deleteConfirm)}
                   disabled={actionLoading === deleteConfirm}
-                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-3 bg-destructive text-destructive-foreground rounded-xl font-medium hover:bg-destructive/90 flex items-center justify-center gap-2"
                 >
                   {actionLoading === deleteConfirm ? (
                     <>

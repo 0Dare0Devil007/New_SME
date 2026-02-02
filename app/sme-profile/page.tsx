@@ -4,10 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  User,
   FileText,
-  Phone,
-  Clock,
   Award,
   Loader2,
   CheckCircle2,
@@ -17,6 +14,8 @@ import {
   Plus,
   X,
   Calendar,
+  ShieldCheck,
+  Link as LinkIcon,
 } from "lucide-react";
 
 interface Skill {
@@ -31,6 +30,16 @@ interface SelectedSkill {
   skillName: string;
   proficiency: string;
   yearsExp: number;
+}
+
+interface Certification {
+  id?: string;
+  title: string;
+  issuer: string;
+  credentialId?: string;
+  credentialUrl?: string;
+  issuedDate?: string;
+  expiryDate?: string;
 }
 
 interface DayAvailability {
@@ -81,14 +90,23 @@ export default function SmeProfilePage() {
     saturday: { enabled: false, timeFrom: "09:00", timeTo: "17:00" },
     sunday: { enabled: false, timeFrom: "09:00", timeTo: "17:00" },
   });
-  const [contactPhone, setContactPhone] = useState("");
-  const [contactPref, setContactPref] = useState("email");
-  const [teamsLink, setTeamsLink] = useState("");
 
   // Skills
   const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
   const [selectedSkills, setSelectedSkills] = useState<SelectedSkill[]>([]);
   const [skillSearch, setSkillSearch] = useState("");
+
+  // Certifications
+  const [certifications, setCertifications] = useState<Certification[]>([]);
+  const [showCertForm, setShowCertForm] = useState(false);
+  const [newCert, setNewCert] = useState<Certification>({
+    title: "",
+    issuer: "",
+    credentialId: "",
+    credentialUrl: "",
+    issuedDate: "",
+    expiryDate: "",
+  });
 
   // Check nomination status
   useEffect(() => {
@@ -116,15 +134,25 @@ export default function SmeProfilePage() {
                 }
               }
               
-              setContactPhone(profileData.contactPhone || "");
-              setContactPref(profileData.contactPref || "email");
-              setTeamsLink(profileData.teamsLink || "");
               setSelectedSkills(
                 profileData.skills?.map((s: { skillId: string; skillName: string; proficiency: string; yearsExp: string }) => ({
                   skillId: s.skillId,
                   skillName: s.skillName,
                   proficiency: s.proficiency,
                   yearsExp: parseFloat(s.yearsExp) || 0,
+                })) || []
+              );
+
+              // Load existing certifications
+              setCertifications(
+                profileData.certifications?.map((c: Certification) => ({
+                  id: c.id,
+                  title: c.title,
+                  issuer: c.issuer || "",
+                  credentialId: c.credentialId || "",
+                  credentialUrl: c.credentialUrl || "",
+                  issuedDate: c.issuedDate || "",
+                  expiryDate: c.expiryDate || "",
                 })) || []
               );
             }
@@ -213,6 +241,26 @@ export default function SmeProfilePage() {
     { key: "sunday", label: "Sunday" },
   ];
 
+  // Certification functions
+  const addCertification = () => {
+    if (!newCert.title.trim()) return;
+    
+    setCertifications([...certifications, { ...newCert }]);
+    setNewCert({
+      title: "",
+      issuer: "",
+      credentialId: "",
+      credentialUrl: "",
+      issuedDate: "",
+      expiryDate: "",
+    });
+    setShowCertForm(false);
+  };
+
+  const removeCertification = (index: number) => {
+    setCertifications(certifications.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async () => {
     setSubmitting(true);
     setError(null);
@@ -227,13 +275,18 @@ export default function SmeProfilePage() {
         body: JSON.stringify({
           bio,
           availability: JSON.stringify(weeklyAvailability),
-          contactPhone,
-          contactPref,
-          teamsLink,
           skills: selectedSkills.map((s) => ({
             skillId: s.skillId,
             proficiency: s.proficiency,
             yearsExp: s.yearsExp,
+          })),
+          certifications: certifications.map((c) => ({
+            title: c.title,
+            issuer: c.issuer,
+            credentialId: c.credentialId,
+            credentialUrl: c.credentialUrl,
+            issuedDate: c.issuedDate || null,
+            expiryDate: c.expiryDate || null,
           })),
         }),
       });
@@ -255,8 +308,8 @@ export default function SmeProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -264,20 +317,20 @@ export default function SmeProfilePage() {
   // Not nominated
   if (nominationStatus?.status === "NONE") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20">
+      <div className="min-h-screen bg-background">
         <div className="max-w-2xl mx-auto px-8 py-16">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
-            <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertCircle className="w-8 h-8 text-yellow-600" />
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-8 text-center">
+            <div className="w-16 h-16 bg-status-pending/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8 text-status-pending" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Not Nominated Yet</h1>
-            <p className="text-gray-600 mb-6">
+            <h1 className="text-2xl font-bold text-foreground mb-2">Not Nominated Yet</h1>
+            <p className="text-muted-foreground mb-6">
               You need to be nominated by a Team Leader before you can create your SME profile.
               Contact your Team Leader if you&apos;d like to become a Subject Matter Expert.
             </p>
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+              className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Home
@@ -291,22 +344,22 @@ export default function SmeProfilePage() {
   const isEditing = nominationStatus?.status === "SME";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20">
+    <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-8 py-12">
         {/* Header */}
         <div className="mb-8">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Home
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             {isEditing ? "Edit Your SME Profile" : "Create Your SME Profile"}
           </h1>
           {!isEditing && nominationStatus?.nominatedBy && (
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               You were nominated by{" "}
               <span className="font-semibold">{nominationStatus.nominatedBy.name}</span>
               {nominationStatus.nominatedBy.position && (
@@ -323,58 +376,58 @@ export default function SmeProfilePage() {
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
                   step >= s
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-500"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 {step > s ? <CheckCircle2 className="w-5 h-5" /> : s}
               </div>
-              <span className={`ml-2 text-sm font-medium ${step >= s ? "text-gray-900" : "text-gray-400"}`}>
-                {s === 1 ? "Basic Info" : s === 2 ? "Contact" : "Skills"}
+              <span className={`ml-2 text-sm font-medium ${step >= s ? "text-foreground" : "text-muted-foreground"}`}>
+                {s === 1 ? "Basic Info" : s === 2 ? "Skills" : "Certifications"}
               </span>
               {s < 3 && (
-                <div className={`w-20 h-1 mx-4 rounded ${step > s ? "bg-blue-600" : "bg-gray-200"}`} />
+                <div className={`w-20 h-1 mx-4 rounded ${step > s ? "bg-primary" : "bg-muted"}`} />
               )}
             </div>
           ))}
         </div>
 
         {/* Form */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-8">
           {/* Step 1: Basic Info */}
           {step === 1 && (
             <div className="space-y-6">
               <div className="flex items-center gap-2 mb-6">
-                <FileText className="w-5 h-5 text-blue-600" />
-                <h2 className="text-xl font-semibold text-gray-900">Basic Information</h2>
+                <FileText className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-semibold text-foreground">Basic Information</h2>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Bio / About You
                 </label>
                 <textarea
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   placeholder="Tell others about your expertise, experience, and what you can help with..."
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  className="w-full border border-input bg-background text-foreground rounded-xl px-4 py-3 focus:ring-2 focus:ring-ring focus:border-ring resize-none placeholder:text-muted-foreground"
                   rows={5}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label className="block text-sm font-medium text-foreground mb-3">
                   <Calendar className="w-4 h-4 inline mr-1" />
                   Weekly Availability
                 </label>
-                <div className="space-y-3 bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <div className="space-y-3 bg-muted rounded-xl p-4 border border-border">
                   {days.map((day) => (
                     <div
                       key={day.key}
                       className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
                         weeklyAvailability[day.key].enabled
-                          ? "bg-white border border-blue-200"
-                          : "bg-gray-100"
+                          ? "bg-card border border-primary/30"
+                          : "bg-muted"
                       }`}
                     >
                       <label className="flex items-center gap-2 cursor-pointer min-w-[120px]">
@@ -382,9 +435,9 @@ export default function SmeProfilePage() {
                           type="checkbox"
                           checked={weeklyAvailability[day.key].enabled}
                           onChange={() => toggleDay(day.key)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          className="w-4 h-4 text-primary border-input rounded focus:ring-ring"
                         />
-                        <span className={`font-medium ${weeklyAvailability[day.key].enabled ? "text-gray-900" : "text-gray-500"}`}>
+                        <span className={`font-medium ${weeklyAvailability[day.key].enabled ? "text-foreground" : "text-muted-foreground"}`}>
                           {day.label}
                         </span>
                       </label>
@@ -395,91 +448,33 @@ export default function SmeProfilePage() {
                             type="time"
                             value={weeklyAvailability[day.key].timeFrom}
                             onChange={(e) => updateDayTime(day.key, "timeFrom", e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="border border-input bg-background text-foreground rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring"
                           />
-                          <span className="text-gray-400">to</span>
+                          <span className="text-muted-foreground">to</span>
                           <input
                             type="time"
                             value={weeklyAvailability[day.key].timeTo}
                             onChange={(e) => updateDayTime(day.key, "timeTo", e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="border border-input bg-background text-foreground rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring"
                           />
                         </div>
                       )}
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   Select the days and times when you&apos;re available to help others
                 </p>
               </div>
             </div>
           )}
 
-          {/* Step 2: Contact Preferences */}
+          {/* Step 2: Skills */}
           {step === 2 && (
             <div className="space-y-6">
               <div className="flex items-center gap-2 mb-6">
-                <Phone className="w-5 h-5 text-blue-600" />
-                <h2 className="text-xl font-semibold text-gray-900">Contact Preferences</h2>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number (optional)
-                </label>
-                <input
-                  type="tel"
-                  value={contactPhone}
-                  onChange={(e) => setContactPhone(e.target.value)}
-                  placeholder="+1 (555) 123-4567"
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Teams Meeting Link (optional)
-                </label>
-                <input
-                  type="url"
-                  value={teamsLink}
-                  onChange={(e) => setTeamsLink(e.target.value)}
-                  placeholder="https://teams.microsoft.com/l/meetup-join/..."
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Preferred Contact Method
-                </label>
-                <div className="flex gap-4">
-                  {["email", "phone", "teams"].map((method) => (
-                    <button
-                      key={method}
-                      type="button"
-                      onClick={() => setContactPref(method)}
-                      className={`flex-1 py-3 px-4 rounded-xl border-2 font-medium capitalize transition-colors ${
-                        contactPref === method
-                          ? "border-blue-600 bg-blue-50 text-blue-700"
-                          : "border-gray-200 text-gray-600 hover:border-gray-300"
-                      }`}
-                    >
-                      {method}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Skills */}
-          {step === 3 && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-6">
-                <Award className="w-5 h-5 text-blue-600" />
-                <h2 className="text-xl font-semibold text-gray-900">Your Skills</h2>
+                <Award className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-semibold text-foreground">Your Skills</h2>
               </div>
 
               {/* Skill Search */}
@@ -489,20 +484,20 @@ export default function SmeProfilePage() {
                   value={skillSearch}
                   onChange={(e) => setSkillSearch(e.target.value)}
                   placeholder="Search and add skills..."
-                  className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full border border-input bg-background text-foreground rounded-xl px-4 py-3 focus:ring-2 focus:ring-ring focus:border-ring placeholder:text-muted-foreground"
                 />
                 {skillSearch && filteredSkills.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-auto">
+                  <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-xl shadow-lg max-h-60 overflow-auto">
                     {filteredSkills.slice(0, 10).map((skill) => (
                       <button
                         key={skill.id}
                         type="button"
                         onClick={() => addSkill(skill)}
-                        className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-2"
+                        className="w-full px-4 py-3 text-left hover:bg-muted flex items-center gap-2"
                       >
-                        <Plus className="w-4 h-4 text-blue-600" />
-                        <span className="font-medium">{skill.name}</span>
-                        <span className="text-sm text-gray-400">({skill.category})</span>
+                        <Plus className="w-4 h-4 text-primary" />
+                        <span className="font-medium text-foreground">{skill.name}</span>
+                        <span className="text-sm text-muted-foreground">({skill.category})</span>
                       </button>
                     ))}
                   </div>
@@ -511,8 +506,8 @@ export default function SmeProfilePage() {
 
               {/* Selected Skills */}
               {selectedSkills.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 border border-dashed border-gray-300 rounded-xl">
-                  <Award className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                <div className="text-center py-8 text-muted-foreground border border-dashed border-border rounded-xl">
+                  <Award className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
                   <p>No skills added yet. Search above to add your skills.</p>
                 </div>
               ) : (
@@ -520,25 +515,25 @@ export default function SmeProfilePage() {
                   {selectedSkills.map((skill) => (
                     <div
                       key={skill.skillId}
-                      className="bg-gray-50 rounded-xl p-4 border border-gray-200"
+                      className="bg-muted rounded-xl p-4 border border-border"
                     >
                       <div className="flex items-center justify-between mb-3">
-                        <span className="font-semibold text-gray-900">{skill.skillName}</span>
+                        <span className="font-semibold text-foreground">{skill.skillName}</span>
                         <button
                           type="button"
                           onClick={() => removeSkill(skill.skillId)}
-                          className="text-gray-400 hover:text-red-500"
+                          className="text-muted-foreground hover:text-destructive"
                         >
                           <X className="w-5 h-5" />
                         </button>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">Proficiency</label>
+                          <label className="block text-xs text-muted-foreground mb-1">Proficiency</label>
                           <select
                             value={skill.proficiency}
                             onChange={(e) => updateSkill(skill.skillId, "proficiency", e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                            className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2 text-sm"
                           >
                             <option value="Beginner">Beginner</option>
                             <option value="Intermediate">Intermediate</option>
@@ -547,7 +542,7 @@ export default function SmeProfilePage() {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">Years of Experience</label>
+                          <label className="block text-xs text-muted-foreground mb-1">Years of Experience</label>
                           <input
                             type="number"
                             min="0"
@@ -555,7 +550,7 @@ export default function SmeProfilePage() {
                             step="0.5"
                             value={skill.yearsExp}
                             onChange={(e) => updateSkill(skill.skillId, "yearsExp", parseFloat(e.target.value) || 0)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                            className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2 text-sm"
                           />
                         </div>
                       </div>
@@ -566,20 +561,185 @@ export default function SmeProfilePage() {
             </div>
           )}
 
+          {/* Step 3: Certifications */}
+          {step === 3 && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-6">
+                <ShieldCheck className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-semibold text-foreground">Certifications</h2>
+                <span className="text-sm text-muted-foreground">(Optional)</span>
+              </div>
+
+              {/* Add Certification Button */}
+              {!showCertForm && (
+                <button
+                  type="button"
+                  onClick={() => setShowCertForm(true)}
+                  className="w-full py-3 px-4 border-2 border-dashed border-border rounded-xl text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  Add Certification
+                </button>
+              )}
+
+              {/* New Certification Form */}
+              {showCertForm && (
+                <div className="bg-primary/5 rounded-xl p-4 border border-primary/20 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium text-foreground">New Certification</h3>
+                    <button
+                      type="button"
+                      onClick={() => setShowCertForm(false)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2">
+                      <label className="block text-xs text-muted-foreground mb-1">Certification Title *</label>
+                      <input
+                        type="text"
+                        value={newCert.title}
+                        onChange={(e) => setNewCert({ ...newCert, title: e.target.value })}
+                        placeholder="e.g., AWS Solutions Architect"
+                        className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring placeholder:text-muted-foreground"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-xs text-muted-foreground mb-1">Issuing Organization</label>
+                      <input
+                        type="text"
+                        value={newCert.issuer}
+                        onChange={(e) => setNewCert({ ...newCert, issuer: e.target.value })}
+                        placeholder="e.g., Amazon Web Services"
+                        className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring placeholder:text-muted-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Credential ID</label>
+                      <input
+                        type="text"
+                        value={newCert.credentialId}
+                        onChange={(e) => setNewCert({ ...newCert, credentialId: e.target.value })}
+                        placeholder="e.g., ABC123XYZ"
+                        className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring placeholder:text-muted-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Credential URL</label>
+                      <input
+                        type="url"
+                        value={newCert.credentialUrl}
+                        onChange={(e) => setNewCert({ ...newCert, credentialUrl: e.target.value })}
+                        placeholder="https://..."
+                        className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring placeholder:text-muted-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Issue Date</label>
+                      <input
+                        type="date"
+                        value={newCert.issuedDate}
+                        onChange={(e) => setNewCert({ ...newCert, issuedDate: e.target.value })}
+                        className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Expiry Date</label>
+                      <input
+                        type="date"
+                        value={newCert.expiryDate}
+                        onChange={(e) => setNewCert({ ...newCert, expiryDate: e.target.value })}
+                        className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ring focus:border-ring"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={addCertification}
+                    disabled={!newCert.title.trim()}
+                    className="w-full py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Add Certification
+                  </button>
+                </div>
+              )}
+
+              {/* Certifications List */}
+              {certifications.length === 0 && !showCertForm ? (
+                <div className="text-center py-8 text-muted-foreground border border-dashed border-border rounded-xl">
+                  <ShieldCheck className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
+                  <p>No certifications added yet.</p>
+                  <p className="text-sm">Add your professional certifications to showcase your expertise.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {certifications.map((cert, index) => (
+                    <div
+                      key={index}
+                      className="bg-muted rounded-xl p-4 border border-border"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-foreground">{cert.title}</h4>
+                          {cert.issuer && (
+                            <p className="text-sm text-muted-foreground">{cert.issuer}</p>
+                          )}
+                          <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
+                            {cert.credentialId && (
+                              <span>ID: {cert.credentialId}</span>
+                            )}
+                            {cert.issuedDate && (
+                              <span>Issued: {new Date(cert.issuedDate).toLocaleDateString()}</span>
+                            )}
+                            {cert.expiryDate && (
+                              <span>Expires: {new Date(cert.expiryDate).toLocaleDateString()}</span>
+                            )}
+                          </div>
+                          {cert.credentialUrl && (
+                            <a
+                              href={cert.credentialUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 mt-2"
+                            >
+                              <LinkIcon className="w-3 h-3" />
+                              View Credential
+                            </a>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeCertification(index)}
+                          className="text-muted-foreground hover:text-destructive ml-2"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Error Message */}
           {error && (
-            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
+            <div className="mt-6 p-4 bg-destructive/10 border border-destructive/30 rounded-xl text-destructive">
               {error}
             </div>
           )}
 
           {/* Navigation Buttons */}
-          <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+          <div className="flex justify-between mt-8 pt-6 border-t border-border">
             {step > 1 ? (
               <button
                 type="button"
                 onClick={() => setStep(step - 1)}
-                className="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 flex items-center gap-2"
+                className="px-6 py-3 border border-border rounded-xl text-foreground font-medium hover:bg-muted flex items-center gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Previous
@@ -592,7 +752,7 @@ export default function SmeProfilePage() {
               <button
                 type="button"
                 onClick={() => setStep(step + 1)}
-                className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 flex items-center gap-2"
+                className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 flex items-center gap-2"
               >
                 Next
                 <ArrowRight className="w-4 h-4" />
@@ -602,7 +762,7 @@ export default function SmeProfilePage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting || selectedSkills.length === 0}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 flex items-center gap-2"
+                className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 disabled:opacity-50 flex items-center gap-2"
               >
                 {submitting ? (
                   <>

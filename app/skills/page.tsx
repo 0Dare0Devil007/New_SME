@@ -10,7 +10,7 @@ interface Skill {
   experts: number;
   description: string;
   gradient: string;
-  icon: string;
+  imageUrl: string;
   topExperts?: string[];
 }
 
@@ -97,9 +97,9 @@ export default function ViewAllSkillsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
+      <section className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 dark:from-primary/90 dark:via-primary/80 dark:to-primary/70 relative overflow-hidden">
         {/* Background decorations */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl" />
@@ -127,13 +127,13 @@ export default function ViewAllSkillsPage() {
           {/* Search Bar */}
           <div className="max-w-3xl mx-auto">
             <div className="relative">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search skills by name or description..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-14 pr-6 py-4 bg-white rounded-[14px] border-none shadow-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-14 pr-6 py-4 bg-card text-foreground rounded-[14px] border-none shadow-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-muted-foreground"
               />
             </div>
           </div>
@@ -144,25 +144,25 @@ export default function ViewAllSkillsPage() {
       <main className="max-w-7xl mx-auto px-8 py-12">
         {/* Results count */}
         <div className="mb-6">
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Showing{" "}
-            <span className="font-semibold text-gray-900">
+            <span className="font-semibold text-foreground">
               {pagination.totalCount > 0 
                 ? `${(pagination.currentPage - 1) * pagination.limit + 1}-${Math.min(pagination.currentPage * pagination.limit, pagination.totalCount)}`
                 : "0"}
             </span>{" "}
-            of <span className="font-semibold text-gray-900">{pagination.totalCount}</span> skills
+            of <span className="font-semibold text-foreground">{pagination.totalCount}</span> skills
           </p>
         </div>
 
         {/* Skills Grid */}
         {isLoading ? (
           <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
         ) : skills.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-gray-600 text-lg">
+            <p className="text-muted-foreground text-lg">
               {searchQuery 
                 ? "No skills found matching your search."
                 : "No skills available."}
@@ -184,8 +184,8 @@ export default function ViewAllSkillsPage() {
                   disabled={!pagination.hasPreviousPage}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
                     !pagination.hasPreviousPage
-                      ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                      ? "border-border text-muted-foreground cursor-not-allowed"
+                      : "border-border text-foreground hover:bg-muted"
                   }`}
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -199,8 +199,8 @@ export default function ViewAllSkillsPage() {
                       onClick={() => handlePageChange(page)}
                       className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
                         pagination.currentPage === page
-                          ? "bg-blue-600 text-white"
-                          : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-card border border-border text-foreground hover:bg-muted"
                       }`}
                     >
                       {page}
@@ -213,8 +213,8 @@ export default function ViewAllSkillsPage() {
                   disabled={!pagination.hasNextPage}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
                     !pagination.hasNextPage
-                      ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                      ? "border-border text-muted-foreground cursor-not-allowed"
+                      : "border-border text-foreground hover:bg-muted"
                   }`}
                 >
                   <span className="text-sm font-medium">Next</span>
