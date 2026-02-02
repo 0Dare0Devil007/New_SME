@@ -30,6 +30,16 @@ interface FeaturedExpert {
 }
 
 function ExpertCard({ expert }: { expert: FeaturedExpert }) {
+  // Get initials from name
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <Link href={`/experts/${expert.id}`} className="flex gap-4 p-3 rounded-lg hover:bg-muted transition-colors cursor-pointer">
       <div className="relative shrink-0">
@@ -40,7 +50,11 @@ function ExpertCard({ expert }: { expert: FeaturedExpert }) {
             className="w-12 h-12 rounded-full border-2 border-border object-cover"
           />
         ) : (
-          <div className="w-12 h-12 rounded-full bg-primary border-2 border-border" />
+          <div className="w-12 h-12 rounded-full bg-primary border-2 border-border flex items-center justify-center">
+            <span className="text-primary-foreground font-semibold text-sm">
+              {getInitials(expert.name)}
+            </span>
+          </div>
         )}
         {expert.verified && (
           <div className="absolute -top-1 -right-1 w-5 h-5 bg-status-pending rounded-full flex items-center justify-center">
@@ -93,9 +107,8 @@ export default function HomePage() {
         const experts = Array.isArray(expertsData) ? expertsData : [];
         setFeaturedExperts(experts);
         
-        // Set total SMEs from actual expert count
-        const allExperts = Array.isArray(allExpertsData) ? allExpertsData : [];
-        setTotalSMEs(allExperts.length);
+        // Set total SMEs from API response (paginated format returns { experts, total, ... })
+        setTotalSMEs(allExpertsData.total || 0);
         
         // Set total skills from pagination metadata
         setTotalSkills(skillsData.pagination?.totalCount || skills.length);

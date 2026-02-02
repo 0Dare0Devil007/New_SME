@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 // Skill color mapping for consistent UI
@@ -36,13 +36,69 @@ function getCertificationColor(certTitle: string): string {
   return "bg-blue-50 border-blue-200 text-blue-700";
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Fetch all SME profiles with related data
+    const { searchParams } = new URL(request.url);
+    
+    // Pagination params
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
+    
+    // Filter params
+    const search = searchParams.get("search") || "";
+    const location = searchParams.get("location") || "";
+    const department = searchParams.get("department") || "";
+    const skill = searchParams.get("skill") || "";
+
+    // Build where clause for filtering
+    const whereClause: Record<string, unknown> = {
+      status: "APPROVED",
+    };
+
+    // Search filter (name, department)
+    if (search) {
+      whereClause.OR = [
+        { employee: { fullName: { contains: search, mode: "insensitive" } } },
+        { employee: { departmentName: { contains: search, mode: "insensitive" } } },
+        { skills: { some: { skill: { skillName: { contains: search, mode: "insensitive" } } } } },
+      ];
+    }
+
+    // Location filter
+    if (location) {
+      whereClause.employee = {
+        ...(whereClause.employee as object || {}),
+        siteName: location,
+      };
+    }
+
+    // Department filter
+    if (department) {
+      whereClause.employee = {
+        ...(whereClause.employee as object || {}),
+        departmentName: department,
+      };
+    }
+
+    // Skill filter
+    if (skill) {
+      whereClause.skills = {
+        some: {
+          isActive: true,
+          skill: { skillName: skill },
+        },
+      };
+    }
+
+    // Get total count for pagination
+    const totalCount = await prisma.smeProfile.count({
+      where: whereClause as Parameters<typeof prisma.smeProfile.count>[0]["where"],
+    });
+
+    // Fetch paginated SME profiles with related data
     const smeProfiles = await prisma.smeProfile.findMany({
-      where: {
-        status: "APPROVED", // Only show approved SMEs
-      },
+      where: whereClause as Parameters<typeof prisma.smeProfile.findMany>[0]["where"],
       include: {
         employee: true,
         skills: {
@@ -56,7 +112,14 @@ export async function GET() {
         },
         certifications: true,
       },
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
     });
+
+    console.log(`Found ${smeProfiles.length} approved SME profiles (page ${page}, total: ${totalCount})`);
 
     // Transform data for the frontend
     const experts = smeProfiles.map((sme) => {
@@ -92,11 +155,42 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json(experts);
+    // Also fetch unique values for filter dropdowns
+    const [locations, departments, skillsList] = await Promise.all([
+      prisma.employee.findMany({
+        where: { smeProfile: { status: "APPROVED" } },
+        select: { siteName: true },
+        distinct: ["siteName"],
+      }),
+      prisma.employee.findMany({
+        where: { smeProfile: { status: "APPROVED" } },
+        select: { departmentName: true },
+        distinct: ["departmentName"],
+      }),
+      prisma.skill.findMany({
+        where: { smeSkills: { some: { isActive: true, sme: { status: "APPROVED" } } } },
+        select: { skillName: true },
+        distinct: ["skillName"],
+      }),
+    ]);
+
+    return NextResponse.json({
+      experts,
+      total: totalCount,
+      page,
+      limit,
+      totalPages: Math.ceil(totalCount / limit),
+      filters: {
+        locations: locations.map(l => l.siteName).filter(Boolean),
+        departments: departments.map(d => d.departmentName).filter(Boolean),
+        skills: skillsList.map(s => s.skillName).filter(Boolean),
+      },
+    });
   } catch (error) {
     console.error("Error fetching experts:", error);
+    console.error("Error details:", error instanceof Error ? error.message : "Unknown error");
     return NextResponse.json(
-      { error: "Failed to fetch experts" },
+      { error: "Failed to fetch experts", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }

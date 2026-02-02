@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   FileText,
@@ -72,7 +71,6 @@ interface NominationStatus {
 }
 
 export default function SmeProfilePage() {
-  const router = useRouter();
   const [nominationStatus, setNominationStatus] = useState<NominationStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
@@ -297,8 +295,9 @@ export default function SmeProfilePage() {
         throw new Error(data.error || "Failed to save profile");
       }
 
-      // Redirect to experts page
-      router.push(`/experts/${data.id}`);
+      // Redirect to experts page using full page navigation
+      // This ensures the Header component re-fetches user info and updates the nav links
+      window.location.href = `/experts/${data.id}`;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save profile");
     } finally {
