@@ -52,7 +52,7 @@ interface EnrollmentStatus {
 }
 
 type FilterDeliveryMode = "all" | "Virtual" | "In-Person" | "Hybrid";
-type FilterStatus = "all" | "upcoming" | "past";
+type FilterStatus = "upcoming" | "past";
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -60,11 +60,11 @@ export default function CoursesPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [deliveryModeFilter, setDeliveryModeFilter] = useState<FilterDeliveryMode>("all");
-  const [statusFilter, setStatusFilter] = useState<FilterStatus>("all");
+  const [statusFilter, setStatusFilter] = useState<FilterStatus>("upcoming");
   const [currentPage, setCurrentPage] = useState(1);
   const [enrollmentStatuses, setEnrollmentStatuses] = useState<Record<string, EnrollmentStatus>>({});
   const [enrollingCourseId, setEnrollingCourseId] = useState<string | null>(null);
-  const coursesPerPage = 6;
+  const coursesPerPage = 5;
 
   const fetchCourses = useCallback(async () => {
     try {
@@ -192,7 +192,6 @@ export default function CoursesPage() {
     const now = new Date();
     const isUpcoming = !course.scheduledDate || new Date(course.scheduledDate) >= now;
     const matchesStatus =
-      statusFilter === "all" ||
       (statusFilter === "upcoming" && isUpcoming) ||
       (statusFilter === "past" && !isUpcoming);
 
@@ -328,7 +327,6 @@ export default function CoursesPage() {
               }}
               className="border border-border rounded-xl px-3 py-2.5 text-sm bg-card text-foreground focus:ring-2 focus:ring-primary focus:border-primary"
             >
-              <option value="all">All Sessions</option>
               <option value="upcoming">Upcoming</option>
               <option value="past">Past</option>
             </select>
@@ -354,6 +352,21 @@ export default function CoursesPage() {
 
       {/* Courses List */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        {/* Results count */}
+        {filteredCourses.length > 0 && (
+          <div className="mb-6">
+            <p className="text-muted-foreground">
+              Showing{" "}
+              <span className="font-semibold text-foreground">
+                {filteredCourses.length > 0
+                  ? `${(currentPage - 1) * coursesPerPage + 1}-${Math.min(currentPage * coursesPerPage, filteredCourses.length)}`
+                  : "0"}
+              </span>{" "}
+              of <span className="font-semibold text-foreground">{filteredCourses.length}</span> courses
+            </p>
+          </div>
+        )}
+
         {filteredCourses.length === 0 ? (
           <div className="bg-card rounded-2xl shadow-sm border border-border p-12 text-center">
             <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
@@ -361,7 +374,7 @@ export default function CoursesPage() {
             </div>
             <h3 className="text-xl font-bold text-foreground mb-2">No courses found</h3>
             <p className="text-muted-foreground max-w-md mx-auto">
-              {searchQuery || deliveryModeFilter !== "all" || statusFilter !== "all"
+              {searchQuery || deliveryModeFilter !== "all"
                 ? "Try adjusting your filters or search query to find more courses."
                 : "There are no training courses available yet. Check back later!"}
             </p>
@@ -369,7 +382,7 @@ export default function CoursesPage() {
         ) : (
           <>
             {/* Upcoming Sessions */}
-            {(statusFilter === "all" || statusFilter === "upcoming") && upcomingCourses.length > 0 && (
+            {statusFilter === "upcoming" && upcomingCourses.length > 0 && (
               <div className="mb-8">
                 <div className="flex items-center gap-2 mb-4">
                   <CheckCircle2 className="w-5 h-5 text-green-600" />
@@ -379,28 +392,26 @@ export default function CoursesPage() {
                 </div>
 
                 <div className="space-y-4">
-                  {upcomingCourses
-                    .slice(0, statusFilter === "upcoming" ? coursesPerPage : 4)
-                    .map((course) => (
-                      <CourseCard
-                        key={course.id}
-                        course={course}
-                        isUpcoming={true}
-                        formatDuration={formatDuration}
-                        formatDate={formatDate}
-                        formatTime={formatTime}
-                        enrollmentStatus={enrollmentStatuses[course.id]}
-                        onEnroll={() => handleEnroll(course.id)}
-                        onUnenroll={() => handleUnenroll(course.id)}
-                        isEnrolling={enrollingCourseId === course.id}
-                      />
-                    ))}
+                  {paginatedCourses.map((course) => (
+                    <CourseCard
+                      key={course.id}
+                      course={course}
+                      isUpcoming={true}
+                      formatDuration={formatDuration}
+                      formatDate={formatDate}
+                      formatTime={formatTime}
+                      enrollmentStatus={enrollmentStatuses[course.id]}
+                      onEnroll={() => handleEnroll(course.id)}
+                      onUnenroll={() => handleUnenroll(course.id)}
+                      isEnrolling={enrollingCourseId === course.id}
+                    />
+                  ))}
                 </div>
               </div>
             )}
 
-            {/* Past Sessions */}
-            {(statusFilter === "all" || statusFilter === "past") && pastCourses.length > 0 && (
+            {/* Past Sessions - Only show when specifically filtered */}
+            {statusFilter === "past" && pastCourses.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Calendar className="w-5 h-5 text-muted-foreground" />
@@ -410,22 +421,20 @@ export default function CoursesPage() {
                 </div>
 
                 <div className="space-y-4">
-                  {pastCourses
-                    .slice(0, statusFilter === "past" ? coursesPerPage : 3)
-                    .map((course) => (
-                      <CourseCard
-                        key={course.id}
-                        course={course}
-                        isUpcoming={false}
-                        formatDuration={formatDuration}
-                        formatDate={formatDate}
-                        formatTime={formatTime}
-                        enrollmentStatus={enrollmentStatuses[course.id]}
-                        onEnroll={() => handleEnroll(course.id)}
-                        onUnenroll={() => handleUnenroll(course.id)}
-                        isEnrolling={enrollingCourseId === course.id}
-                      />
-                    ))}
+                  {paginatedCourses.map((course) => (
+                    <CourseCard
+                      key={course.id}
+                      course={course}
+                      isUpcoming={false}
+                      formatDuration={formatDuration}
+                      formatDate={formatDate}
+                      formatTime={formatTime}
+                      enrollmentStatus={enrollmentStatuses[course.id]}
+                      onEnroll={() => handleEnroll(course.id)}
+                      onUnenroll={() => handleUnenroll(course.id)}
+                      isEnrolling={enrollingCourseId === course.id}
+                    />
+                  ))}
                 </div>
               </div>
             )}
@@ -482,12 +491,20 @@ function CourseCard({
   formatDuration,
   formatDate,
   formatTime,
+  enrollmentStatus,
+  onEnroll,
+  onUnenroll,
+  isEnrolling,
 }: {
   course: Course;
   isUpcoming: boolean;
   formatDuration: (minutes: number) => string;
   formatDate: (dateString: string) => string;
   formatTime: (dateString: string) => string;
+  enrollmentStatus?: EnrollmentStatus;
+  onEnroll: () => void;
+  onUnenroll: () => void;
+  isEnrolling: boolean;
 }) {
   const getDeliveryModeIcon = (mode: string) => {
     switch (mode) {
@@ -521,7 +538,7 @@ function CourseCard({
             <span
               className={`text-xs font-medium px-3 py-1 rounded-lg ml-4 ${
                 isUpcoming
-                  ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                  ? "bg-green-500/15 text-green-600 dark:text-green-400"
                   : "bg-muted text-muted-foreground"
               }`}
             >
@@ -603,7 +620,7 @@ function CourseCard({
 
           {/* Enroll Button (only for upcoming) */}
           {isUpcoming && (
-            <button className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-4 py-2.5 rounded-xl shadow-lg shadow-green-200 text-sm font-medium transition-all flex items-center justify-center gap-2">
+            <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2">
               <Calendar className="w-4 h-4" />
               View Details
             </button>

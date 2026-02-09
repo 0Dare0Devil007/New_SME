@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
       full_name: string;
       position: string | null;
       department_name: string | null;
-      avatar_url: string | null;
+      image_url: string | null;
       enrolled_count: bigint;
     }>>`
       SELECT 
@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
         e.full_name,
         e.position,
         e.department_name,
-        e.avatar_url,
+        e.image_url,
         COALESCE((SELECT COUNT(*) FROM course_enrollments ce WHERE ce.course_id = c.course_id AND ce.status = 'ENROLLED'), 0) as enrolled_count
       FROM courses c
       INNER JOIN sme_profiles sp ON c.sme_id = sp.sme_id
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
         name: course.full_name,
         position: course.position,
         department: course.department_name,
-        imageUrl: course.avatar_url,
+        imageUrl: course.image_url,
       },
     }));
 

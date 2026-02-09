@@ -70,6 +70,22 @@ export function NotificationBell() {
     }
   };
 
+  // Mark all notifications as read
+  const markAllAsRead = async () => {
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+      });
+      // Update local state
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, isRead: true }))
+      );
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+    }
+  };
+
   // Format relative time
   const getRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -135,13 +151,23 @@ export function NotificationBell() {
       <PopoverContent className="w-96 p-0" align="end">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h3 className="font-semibold text-lg text-foreground">Notifications</h3>
-          <Link
-            href="/notifications"
-            className="text-sm text-primary hover:text-primary/80"
-            onClick={() => setIsOpen(false)}
-          >
-            View all
-          </Link>
+          <div className="flex items-center gap-3">
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Read all
+              </button>
+            )}
+            <Link
+              href="/notifications"
+              className="text-sm text-primary hover:text-primary/80"
+              onClick={() => setIsOpen(false)}
+            >
+              View all
+            </Link>
+          </div>
         </div>
         <ScrollArea className="h-[400px]">
           {isLoading ? (
@@ -161,18 +187,9 @@ export function NotificationBell() {
               {notifications.map((notification) => (
                 <div
                   key={notification.notificationId}
-                  className={`p-4 border-b border-border hover:bg-muted transition-colors cursor-pointer ${
+                  className={`p-4 border-b border-border hover:bg-muted transition-colors ${
                     !notification.isRead ? "bg-primary/10" : ""
                   }`}
-                  onClick={() => {
-                    if (!notification.isRead) {
-                      markAsRead(notification.notificationId);
-                    }
-                    if (notification.actionUrl) {
-                      setIsOpen(false);
-                      window.location.href = notification.actionUrl;
-                    }
-                  }}
                 >
                   <div className="flex gap-3">
                     <div className="text-2xl flex-shrink-0">
@@ -185,9 +202,38 @@ export function NotificationBell() {
                       <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line line-clamp-2">
                         {notification.message}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {getRelativeTime(notification.createdAt)}
-                      </p>
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-xs text-muted-foreground">
+                          {getRelativeTime(notification.createdAt)}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          {notification.actionUrl && (
+                            <button
+                              onClick={() => {
+                                if (!notification.isRead) {
+                                  markAsRead(notification.notificationId);
+                                }
+                                setIsOpen(false);
+                                window.location.href = notification.actionUrl!;
+                              }}
+                              className="text-xs text-primary hover:text-primary/80 font-medium"
+                            >
+                              View
+                            </button>
+                          )}
+                          {!notification.isRead && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsRead(notification.notificationId);
+                              }}
+                              className="text-xs text-muted-foreground hover:text-foreground font-medium"
+                            >
+                              Mark as read
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                     {!notification.isRead && (
                       <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5"></div>

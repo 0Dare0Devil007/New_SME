@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
 import { signOut } from "@/lib/auth-client";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -21,6 +22,24 @@ interface UserInfo {
   isSme: boolean;
   smeId?: string;
   needsProfileSetup: boolean;
+}
+
+function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isActive = pathname === href || pathname.startsWith(href + "/");
+
+  return (
+    <Link
+      href={href}
+      className={`text-sm font-medium transition-colors px-3 py-2 rounded-md ${
+        isActive
+          ? "text-primary bg-primary/10"
+          : "text-foreground hover:text-primary hover:bg-muted"
+      }`}
+    >
+      {children}
+    </Link>
+  );
 }
 
 export function Header() {
@@ -45,20 +64,32 @@ export function Header() {
     fetchUserInfo();
   }, []);
 
-  // Close dropdown when clicking outside
+  const closeDropdown = useCallback(() => setShowDropdown(false), []);
+
+  // Close dropdown when clicking outside or pressing Escape
   useEffect(() => {
+    if (!showDropdown) return;
+
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as HTMLElement;
       if (!target.closest("[data-user-menu]")) {
-        setShowDropdown(false);
+        closeDropdown();
       }
     }
 
-    if (showDropdown) {
-      document.addEventListener("click", handleClickOutside);
-      return () => document.removeEventListener("click", handleClickOutside);
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeDropdown();
+      }
     }
-  }, [showDropdown]);
+
+    document.addEventListener("click", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showDropdown, closeDropdown]);
 
   const isManager = userInfo?.isManager ?? false;
   const isTeamLeader = userInfo?.isTeamLeader ?? false;
@@ -108,136 +139,92 @@ export function Header() {
             </div>
           </Link>
 
-          <div className="flex items-center gap-6">
-            {/* Theme Toggle */}
+          {/* Navigation */}
+          <nav className="flex items-center gap-1">
+            {!isLoading && user && (
+              <>
+                <NavLink href="/courses">Courses</NavLink>
+                {isManager && <NavLink href="/dashboard">Dashboard</NavLink>}
+                {isTeamLeader && <NavLink href="/nominations">Nominate SMEs</NavLink>}
+                {isCoordinator && <NavLink href="/department-smes">Department SMEs</NavLink>}
+                {isSme && !needsProfileSetup && smeId && (
+                  <NavLink href={`/experts/${smeId}`}>My Profile</NavLink>
+                )}
+              </>
+            )}
+          </nav>
+
+          {/* Actions */}
+          <div className="flex items-center gap-3">
             <ThemeToggle />
 
-            {/* Notification Bell - visible when authenticated */}
-            {!isLoading && user && <NotificationBell />}
-
-            {/* Courses link - visible to all authenticated users */}
             {!isLoading && user && (
-              <Link
-                href="/courses"
-                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
-              >
-                Courses
-              </Link>
-            )}
+              <>
+                <NotificationBell />
 
-            {/* Dashboard link - only visible to Managers */}
-            {!isLoading && isManager && (
-              <Link
-                href="/dashboard"
-                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
-              >
-                Dashboard
-              </Link>
-            )}
+                {needsProfileSetup && (
+                  <Link
+                    href="/sme-profile"
+                    className="text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5"
+                  >
+                    <RiAddLine className="w-4 h-4" />
+                    Complete SME Profile
+                  </Link>
+                )}
 
-            {/* Nominate SMEs link - only visible to Team Leaders */}
-            {!isLoading && isTeamLeader && (
-              <Link
-                href="/nominations"
-                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
-              >
-                Nominate SMEs
-              </Link>
-            )}
-
-            {/* Department SMEs link - only visible to Coordinators */}
-            {!isLoading && isCoordinator && (
-              <Link
-                href="/department-smes"
-                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
-              >
-                Department SMEs
-              </Link>
-            )}
-
-            {/* Complete SME Profile link - visible to nominated employees who need to create profile */}
-            {!isLoading && needsProfileSetup && (
-              <Link
-                href="/sme-profile"
-                className="text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
-              >
-                <RiAddLine className="w-4 h-4" />
-                Complete SME Profile
-              </Link>
-            )}
-
-            {/* SME Profile link - visible to existing SMEs, links to their expert page */}
-            {!isLoading && isSme && !needsProfileSetup && smeId && (
-              <Link
-                href={`/experts/${smeId}`}
-                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
-              >
-                SME Profile
-              </Link>
-            )}
-
-            {/* Loading state */}
-            {isLoading && (
-              <div className="w-9 h-9 rounded-full bg-muted animate-pulse" />
-            )}
-
-            {/* Logged in user */}
-            {!isLoading && user && (
-              <div className="relative" data-user-menu>
-                <button
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-                >
-                  <div className="text-right hidden sm:block">
-                    <p className="text-sm font-medium text-foreground">
-                      {user.name || "User"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{user.email}</p>
-                  </div>
-                  {user.image ? (
-                    <img
-                      src={user.image}
-                      alt={user.name || "User"}
-                      className="w-9 h-9 rounded-full border-2 border-border object-cover"
-                    />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-primary border-2 border-border flex items-center justify-center">
-                      <span className="text-primary-foreground text-sm font-medium">
-                        {getInitials(user.name, user.email)}
-                      </span>
-                    </div>
-                  )}
-                  <RiArrowDownSLine
-                    className={`w-4 h-4 text-muted-foreground transition-transform ${
-                      showDropdown ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-
-                {/* Dropdown menu */}
-                {showDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-popover rounded-lg shadow-lg border border-border py-1 z-50">
-                    <div className="px-4 py-2 border-b border-border sm:hidden">
-                      <p className="text-sm font-medium text-popover-foreground">
+                {/* User Menu */}
+                <div className="relative ml-2" data-user-menu>
+                  <button
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    aria-expanded={showDropdown}
+                    aria-haspopup="true"
+                    className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-muted transition-colors"
+                  >
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-foreground">
                         {user.name || "User"}
                       </p>
-                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
                     </div>
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-2"
-                    >
-                      <RiLogoutBoxLine className="w-4 h-4" />
-                      Sign out
-                    </button>
-                  </div>
-                )}
-              </div>
+                    {user.image ? (
+                      <img
+                        src={user.image}
+                        alt=""
+                        className="w-9 h-9 rounded-full border-2 border-border object-cover"
+                      />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-primary border-2 border-border flex items-center justify-center">
+                        <span className="text-primary-foreground text-sm font-medium">
+                          {getInitials(user.name, user.email)}
+                        </span>
+                      </div>
+                    )}
+                    <RiArrowDownSLine
+                      className={`w-4 h-4 text-muted-foreground transition-transform ${
+                        showDropdown ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {showDropdown && (
+                    <div className="absolute right-0 mt-2 w-48 bg-popover rounded-lg shadow-lg border border-border py-1 z-50">
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-2"
+                      >
+                        <RiLogoutBoxLine className="w-4 h-4" />
+                        Sign out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
 
-            {/* Not logged in */}
+            {isLoading && <div className="w-9 h-9 rounded-full bg-muted animate-pulse" />}
+
             {!isLoading && !user && (
-              <div className="flex items-center gap-3">
+              <>
                 <Link
                   href="/sign-in"
                   className="text-sm font-medium text-foreground hover:text-primary transition-colors"
@@ -250,7 +237,7 @@ export function Header() {
                 >
                   Sign up
                 </Link>
-              </div>
+              </>
             )}
           </div>
         </div>

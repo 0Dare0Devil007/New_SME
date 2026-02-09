@@ -3,7 +3,7 @@ import { getSessionCookie } from "better-auth/cookies";
 
 // Routes that don't require authentication
 const publicRoutes = ["/sign-in", "/sign-up", "/"];
-const publicPrefixes = ["/api/auth", "/api/featured-experts", "/api/skills", "/api/experts"];
+const publicPrefixes = ["/api/auth", "/api/featured-experts", "/api/skills", "/api/experts", "/api/courses"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

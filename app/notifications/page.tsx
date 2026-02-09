@@ -299,7 +299,7 @@ export default function NotificationsPage() {
                                 {getRelativeTime(notification.createdAt)}
                               </p>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 items-center">
                               {notification.actionUrl && (
                                 <Link
                                   href={notification.actionUrl}
@@ -312,6 +312,17 @@ export default function NotificationsPage() {
                                 >
                                   View
                                 </Link>
+                              )}
+                              {!notification.isRead && (
+                                <button
+                                  onClick={() =>
+                                    markAsRead(notification.notificationId)
+                                  }
+                                  className="text-muted-foreground hover:text-foreground text-sm font-medium whitespace-nowrap transition-colors"
+                                  title="Mark as read"
+                                >
+                                  Mark as read
+                                </button>
                               )}
                               <button
                                 onClick={() =>
